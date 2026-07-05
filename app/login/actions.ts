@@ -1,46 +1,12 @@
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 
-export async function login(formData: FormData) {
+export async function insertProfile(userId: string, email: string) {
   const supabase = await createClient();
-
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  const { error } = await supabase.auth.signInWithPassword({
+  await supabase.from("profiles").insert({
+    id: userId,
     email,
-    password,
+    role: "student",
   });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  redirect("/dashboard");
-}
-
-export async function signup(formData: FormData) {
-  const supabase = await createClient();
-
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  const { data, error } = await supabase.auth.signUp({ email, password });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (data.user) {
-    await supabase.from("profiles").insert({
-      id: data.user.id,
-      email: data.user.email ?? email,
-      role: "student",
-    });
-  }
-
-  redirect("/dashboard");
 }

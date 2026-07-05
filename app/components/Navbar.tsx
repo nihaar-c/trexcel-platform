@@ -11,6 +11,13 @@ const authedLinks = [
   { href: "/account", label: "Account" },
 ];
 
+const linkCls = (active: boolean) =>
+  `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+    active
+      ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
+      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+  }`;
+
 export default function Navbar() {
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -33,22 +40,18 @@ export default function Navbar() {
 
   return (
     <nav className="flex items-center gap-2 border-b border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <span className="mr-4 text-sm font-semibold tracking-widest text-zinc-500 uppercase dark:text-zinc-400">
+      <span className="mr-2 text-sm font-semibold tracking-widest text-zinc-500 uppercase dark:text-zinc-400">
         TrExcel
       </span>
+
+      <Link href="/" className={linkCls(pathname === "/")}>
+        Home
+      </Link>
 
       {isLoggedIn === true && (
         <>
           {authedLinks.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                pathname === href
-                  ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              }`}
-            >
+            <Link key={href} href={href} className={linkCls(pathname === href)}>
               {label}
             </Link>
           ))}
@@ -64,14 +67,7 @@ export default function Navbar() {
       )}
 
       {isLoggedIn === false && (
-        <Link
-          href="/login"
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            pathname === "/login"
-              ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-              : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-          }`}
-        >
+        <Link href="/login" className={`ml-auto ${linkCls(pathname === "/login")}`}>
           Log in
         </Link>
       )}
