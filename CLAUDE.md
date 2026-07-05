@@ -33,7 +33,7 @@ Login/signup logic lives in `app/login/actions.ts` as Server Actions (`login`, `
 ## Database Schema
 
 - `public.profiles` — `id, email, phone, role, team_id`
-- `public.teams` — `id, team_name, track, invite_code`
+- `public.teams` — `id, team_name, invite_code, count` (count = current member count, max 3)
 - `public.submissions` — `id, team_id, file_url, description, submitted_at`
 
 RLS is enabled on all three. When adding queries, check the existing policies before assuming a query will succeed — a query that looks correct can silently return zero rows if it doesn't satisfy RLS.
