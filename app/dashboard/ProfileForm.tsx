@@ -32,6 +32,8 @@ type StudentDetails = {
   phone: string | null;
   gender: string | null;
   race: string | null;
+  school_name: string | null;
+  student_id: string | null;
   parent_first_name: string | null;
   parent_last_name: string | null;
   parent_email: string | null;
@@ -178,6 +180,28 @@ export default function ProfileForm({ details, userId }: Props) {
 
       {/* Personal */}
       <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label className={labelCls}>School name</label>
+          <input
+            name="school_name"
+            type="text"
+            defaultValue={details?.school_name ?? ""}
+            required
+            className={inputCls}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className={labelCls}>Student ID</label>
+          <input
+            name="student_id"
+            type="text"
+            defaultValue={details?.student_id ?? ""}
+            required
+            className={inputCls}
+          />
+        </div>
+
         <div className="flex gap-3">
           <div className="flex flex-1 flex-col gap-1.5">
             <label className={labelCls}>First name</label>
@@ -202,13 +226,12 @@ export default function ProfileForm({ details, userId }: Props) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className={labelCls}>
-            Phone <span className="font-normal text-zinc-400">(optional)</span>
-          </label>
+          <label className={labelCls}>Phone</label>
           <input
             name="phone"
             type="tel"
             defaultValue={details?.phone ?? ""}
+            required
             className={inputCls}
           />
         </div>
@@ -225,6 +248,7 @@ export default function ProfileForm({ details, userId }: Props) {
                   value={opt}
                   checked={genderOption === opt}
                   onChange={() => setGenderOption(opt)}
+                  required
                   className="accent-zinc-900 dark:accent-zinc-50"
                 />
                 {opt}
@@ -237,6 +261,7 @@ export default function ProfileForm({ details, userId }: Props) {
                 value="Other"
                 checked={genderOption === "Other"}
                 onChange={() => setGenderOption("Other")}
+                required
                 className="accent-zinc-900 dark:accent-zinc-50"
               />
               Other
@@ -248,6 +273,7 @@ export default function ProfileForm({ details, userId }: Props) {
                 placeholder="Please specify"
                 value={genderOther}
                 onChange={(e) => setGenderOther(e.target.value)}
+                required
                 className={`ml-6 ${inputCls}`}
               />
             )}
@@ -265,6 +291,7 @@ export default function ProfileForm({ details, userId }: Props) {
                   name="race"
                   value={opt}
                   defaultChecked={details?.race === opt}
+                  required
                   className="accent-zinc-900 dark:accent-zinc-50"
                 />
                 {opt}
@@ -282,20 +309,20 @@ export default function ProfileForm({ details, userId }: Props) {
         <div className="flex gap-3">
           <div className="flex flex-1 flex-col gap-1.5">
             <label className={labelCls}>First name</label>
-            <input name="parent_first_name" type="text" defaultValue={details?.parent_first_name ?? ""} className={inputCls} />
+            <input name="parent_first_name" type="text" defaultValue={details?.parent_first_name ?? ""} required className={inputCls} />
           </div>
           <div className="flex flex-1 flex-col gap-1.5">
             <label className={labelCls}>Last name</label>
-            <input name="parent_last_name" type="text" defaultValue={details?.parent_last_name ?? ""} className={inputCls} />
+            <input name="parent_last_name" type="text" defaultValue={details?.parent_last_name ?? ""} required className={inputCls} />
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
           <label className={labelCls}>Email</label>
-          <input name="parent_email" type="email" defaultValue={details?.parent_email ?? ""} className={inputCls} />
+          <input name="parent_email" type="email" defaultValue={details?.parent_email ?? ""} required className={inputCls} />
         </div>
         <div className="flex flex-col gap-1.5">
           <label className={labelCls}>Phone</label>
-          <input name="parent_phone" type="tel" defaultValue={details?.parent_phone ?? ""} className={inputCls} />
+          <input name="parent_phone" type="tel" defaultValue={details?.parent_phone ?? ""} required className={inputCls} />
         </div>
       </div>
 
@@ -306,21 +333,21 @@ export default function ProfileForm({ details, userId }: Props) {
         </p>
         <div className="flex flex-col gap-1.5">
           <label className={labelCls}>Street address</label>
-          <input name="address" type="text" defaultValue={details?.address ?? ""} className={inputCls} />
+          <input name="address" type="text" defaultValue={details?.address ?? ""} required className={inputCls} />
         </div>
         <div className="flex gap-3">
           <div className="flex flex-1 flex-col gap-1.5">
             <label className={labelCls}>City</label>
-            <input name="city" type="text" defaultValue={details?.city ?? ""} className={inputCls} />
+            <input name="city" type="text" defaultValue={details?.city ?? ""} required className={inputCls} />
           </div>
           <div className="flex w-24 flex-col gap-1.5">
             <label className={labelCls}>State</label>
-            <input name="state" type="text" defaultValue={details?.state ?? ""} maxLength={2} placeholder="TX" className={`uppercase ${inputCls}`} />
+            <input name="state" type="text" defaultValue={details?.state ?? ""} maxLength={2} placeholder="TX" required className={`uppercase ${inputCls}`} />
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
           <label className={labelCls}>Zip code</label>
-          <input name="zip_code" type="text" defaultValue={details?.zip_code ?? ""} maxLength={10} className={inputCls} />
+          <input name="zip_code" type="text" defaultValue={details?.zip_code ?? ""} maxLength={10} required className={inputCls} />
         </div>
       </div>
 

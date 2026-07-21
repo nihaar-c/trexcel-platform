@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import DashboardTabs from "./DashboardTabs";
 
 export default async function DashboardPage() {
@@ -17,10 +18,17 @@ export default async function DashboardPage() {
     .eq("id", user.id)
     .single();
 
-  const isStudent = !profile?.role || profile.role === "student";
+  const cookieStore = await cookies();
+  const viewAs = cookieStore.get("trexcel-view-as")?.value;
+  const effectiveRole =
+    profile?.role === "admin" && viewAs === "student" ? "student" : (profile?.role ?? "student");
+
+  const role = effectiveRole;
+  const isStudent = role === "student" || !role;
+  const isMentor = role === "mentor";
 
   const [teamResult, studentDetailsResult] = await Promise.all([
-    isStudent && profile?.team_id
+    (isStudent || isMentor) && profile?.team_id
       ? supabase
           .from("teams")
           .select("team_name, invite_code, count")
@@ -37,11 +45,11 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-6 dark:bg-zinc-950">
+    <div className="flex flex-1 flex-col items-center bg-zinc-50 px-6 py-12 dark:bg-zinc-950">
       <DashboardTabs
         email={user.email!}
         userId={user.id}
-        profile={profile}
+        profile={profile ? { ...profile, role: effectiveRole } : profile}
         team={teamResult.data}
         studentDetails={studentDetailsResult.data}
       />

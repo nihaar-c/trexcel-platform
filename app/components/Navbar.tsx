@@ -5,6 +5,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/auth-actions";
+import AdminViewSwitcher from "@/app/components/AdminViewSwitcher";
+
+const publicLinks = [
+  { href: "/", label: "Home" },
+  { href: "/gallery", label: "Gallery" },
+];
 
 const authedLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -14,8 +20,8 @@ const authedLinks = [
 const linkCls = (active: boolean) =>
   `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
     active
-      ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-      : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+      ? "bg-brand-dark text-white"
+      : "text-zinc-600 hover:bg-brand-gold/20 dark:text-zinc-400 dark:hover:bg-zinc-800"
   }`;
 
 export default function Navbar() {
@@ -39,14 +45,16 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="flex items-center gap-2 border-b border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <span className="mr-2 text-sm font-semibold tracking-widest text-zinc-500 uppercase dark:text-zinc-400">
+    <nav className="flex items-center gap-2 border-b-2 border-brand-gold bg-white px-6 py-3 dark:border-brand-dark dark:bg-zinc-900">
+      <span className="mr-2 text-sm font-semibold tracking-widest text-brand-dark uppercase dark:text-brand-gold">
         TrExcel
       </span>
 
-      <Link href="/" className={linkCls(pathname === "/")}>
-        Home
-      </Link>
+      {publicLinks.map(({ href, label }) => (
+        <Link key={href} href={href} className={linkCls(pathname === href)}>
+          {label}
+        </Link>
+      ))}
 
       {isLoggedIn === true && (
         <>
@@ -55,10 +63,11 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-          <form action={logout} className="ml-auto">
+          <AdminViewSwitcher />
+          <form action={logout}>
             <button
               type="submit"
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-brand-gold/20 dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
               Log out
             </button>

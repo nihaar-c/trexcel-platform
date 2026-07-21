@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      judging_assignments: {
+        Row: {
+          id: string
+          judge_id: string
+          team_id: string
+        }
+        Insert: {
+          id?: string
+          judge_id: string
+          team_id: string
+        }
+        Update: {
+          id?: string
+          judge_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "judging_assignments_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      judging_scores: {
+        Row: {
+          criterion_id: string
+          id: string
+          judge_id: string
+          locked: boolean
+          score: number
+          submitted_at: string
+          team_id: string
+        }
+        Insert: {
+          criterion_id: string
+          id?: string
+          judge_id: string
+          locked?: boolean
+          score: number
+          submitted_at?: string
+          team_id: string
+        }
+        Update: {
+          criterion_id?: string
+          id?: string
+          judge_id?: string
+          locked?: boolean
+          score?: number
+          submitted_at?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "judging_scores_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "rubric_criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "judging_scores_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           email: string | null
@@ -52,6 +123,71 @@ export type Database = {
           },
         ]
       }
+      rubric_categories: {
+        Row: {
+          display_order: number
+          id: string
+          name: string
+          rubric_type: string
+          total_pts: number
+          weight_pct: number
+        }
+        Insert: {
+          display_order?: number
+          id?: string
+          name: string
+          rubric_type: string
+          total_pts: number
+          weight_pct: number
+        }
+        Update: {
+          display_order?: number
+          id?: string
+          name?: string
+          rubric_type?: string
+          total_pts?: number
+          weight_pct?: number
+        }
+        Relationships: []
+      }
+      rubric_criteria: {
+        Row: {
+          category_id: string
+          display_order: number
+          id: string
+          max_score: number
+          min_score: number
+          name: string
+          score_weight: number
+        }
+        Insert: {
+          category_id: string
+          display_order?: number
+          id?: string
+          max_score: number
+          min_score?: number
+          name: string
+          score_weight?: number
+        }
+        Update: {
+          category_id?: string
+          display_order?: number
+          id?: string
+          max_score?: number
+          min_score?: number
+          name?: string
+          score_weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rubric_criteria_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "rubric_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_details: {
         Row: {
           address: string | null
@@ -66,7 +202,9 @@ export type Database = {
           parent_phone: string | null
           phone: string | null
           race: string | null
+          school_name: string | null
           state: string | null
+          student_id: string | null
           user_id: string
           zip_code: string | null
         }
@@ -83,7 +221,9 @@ export type Database = {
           parent_phone?: string | null
           phone?: string | null
           race?: string | null
+          school_name?: string | null
           state?: string | null
+          student_id?: string | null
           user_id: string
           zip_code?: string | null
         }
@@ -100,7 +240,9 @@ export type Database = {
           parent_phone?: string | null
           phone?: string | null
           race?: string | null
+          school_name?: string | null
           state?: string | null
+          student_id?: string | null
           user_id?: string
           zip_code?: string | null
         }
@@ -108,25 +250,40 @@ export type Database = {
       }
       submissions: {
         Row: {
+          ai_description: string | null
+          category: string
           description: string | null
           file_url: string | null
+          help_received: string | null
           id: string
+          status: string
           submitted_at: string
           team_id: string
+          title: string | null
         }
         Insert: {
+          ai_description?: string | null
+          category: string
           description?: string | null
           file_url?: string | null
+          help_received?: string | null
           id?: string
+          status?: string
           submitted_at?: string
           team_id: string
+          title?: string | null
         }
         Update: {
+          ai_description?: string | null
+          category?: string
           description?: string | null
           file_url?: string | null
+          help_received?: string | null
           id?: string
+          status?: string
           submitted_at?: string
           team_id?: string
+          title?: string | null
         }
         Relationships: [
           {
@@ -143,19 +300,25 @@ export type Database = {
           count: number | null
           id: string
           invite_code: string | null
+          memo: string | null
           team_name: string
+          theme: string | null
         }
         Insert: {
           count?: number | null
           id?: string
           invite_code?: string | null
+          memo?: string | null
           team_name: string
+          theme?: string | null
         }
         Update: {
           count?: number | null
           id?: string
           invite_code?: string | null
+          memo?: string | null
           team_name?: string
+          theme?: string | null
         }
         Relationships: []
       }
@@ -164,7 +327,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

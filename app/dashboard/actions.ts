@@ -18,9 +18,20 @@ export async function createTeam(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("team_id")
+    .eq("id", user.id)
+    .single();
+
+  if (existingProfile?.team_id) {
+    return { error: "You are already on a team. Leave your current team first." };
+  }
+
   const teamName = (formData.get("team_name") as string)?.trim();
 
   if (!teamName) return { error: "Team name is required." };
+  if (teamName.length > 100) return { error: "Team name must be 100 characters or fewer." };
 
   const inviteCode = randomBytes(3).toString("hex").toUpperCase();
 
@@ -52,11 +63,22 @@ export async function joinTeam(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("team_id")
+    .eq("id", user.id)
+    .single();
+
+  if (existingProfile?.team_id) {
+    return { error: "You are already on a team. Leave your current team first." };
+  }
+
   const inviteCode = (formData.get("invite_code") as string)
     ?.trim()
     .toUpperCase();
 
   if (!inviteCode) return { error: "Invite code is required." };
+  if (!/^[A-F0-9]{6}$/.test(inviteCode)) return { error: "Invalid invite code format." };
 
   const { data: team, error: teamError } = await supabase
     .from("teams")
@@ -68,8 +90,8 @@ export async function joinTeam(
     return { error: "Team not found. Check the code and try again." };
   }
 
-  if ((team.count ?? 0) >= 3) {
-    return { error: "This team is full (max 3 members)." };
+  if ((team.count ?? 0) >= 4) {
+    return { error: "This team is full (max 3 students + 1 mentor)." };
   }
 
   const { error: profileError } = await supabase
@@ -85,6 +107,105 @@ export async function joinTeam(
     .eq("id", team.id);
 
   redirect("/dashboard");
+}
+
+type SubmissionState = { error?: string; success?: boolean } | null;
+
+export async function upsertSubmission(
+  _prev: SubmissionState,
+  formData: FormData,
+): Promise<SubmissionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("team_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.team_id) return { error: "You must be on a team to submit." };
+  if (profile.role === "mentor") return { error: "Mentors cannot submit." };
+
+  const ALLOWED_CATEGORIES = ["STEM", "ART", "FITNESS"] as const;
+  const ALLOWED_STATUSES = ["draft", "submitted"] as const;
+
+  const str = (k: string) => (formData.get(k) as string)?.trim() || null;
+  const category = str("category");
+  if (!category || !ALLOWED_CATEGORIES.includes(category as typeof ALLOWED_CATEGORIES[number])) {
+    return { error: "Invalid category." };
+  }
+
+  const statusRaw = (formData.get("status") as string)?.trim();
+  if (!ALLOWED_STATUSES.includes(statusRaw as typeof ALLOWED_STATUSES[number])) {
+    return { error: "Invalid status." };
+  }
+  const status = statusRaw as typeof ALLOWED_STATUSES[number];
+
+  const fileUrlRaw = str("file_url");
+  if (fileUrlRaw !== null) {
+    try {
+      const parsed = new URL(fileUrlRaw);
+      if (parsed.protocol !== "https:") return { error: "File URL must use HTTPS." };
+    } catch {
+      return { error: "File URL is not a valid URL." };
+    }
+  }
+
+  const { error } = await supabase.from("submissions").upsert(
+    {
+      team_id: profile.team_id,
+      category,
+      title: str("title"),
+      description: str("description"),
+      ai_description: str("ai_description"),
+      help_received: str("help_received"),
+      file_url: fileUrlRaw,
+      status,
+      submitted_at: new Date().toISOString(),
+    },
+    { onConflict: "team_id,category" },
+  );
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/submissions");
+  return { success: true };
+}
+
+export async function saveTeamOverview(
+  _prev: SubmissionState,
+  formData: FormData,
+): Promise<SubmissionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("team_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.team_id) return { error: "No team found." };
+
+  const theme = (formData.get("theme") as string)?.trim() || null;
+  const memo = (formData.get("memo") as string)?.trim() || null;
+
+  const { error } = await supabase
+    .from("teams")
+    .update({ theme, memo })
+    .eq("id", profile.team_id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/submissions");
+  return { success: true };
 }
 
 export async function saveStudentInfo(
@@ -110,6 +231,8 @@ export async function saveStudentInfo(
   const { error } = await supabase.from("student_details").upsert(
     {
       user_id: user.id,
+      school_name: str("school_name"),
+      student_id: str("student_id"),
       first_name: str("first_name"),
       last_name: str("last_name"),
       phone: str("phone"),
