@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useActionState } from "react";
 import Link from "next/link";
 import TeamSetup from "./TeamSetup";
 import ProfileForm from "./ProfileForm";
 import CompetitionOverview from "./CompetitionOverview";
+import { saveMentorRequest } from "./actions";
 
 type Profile = { role: string | null; team_id: string | null } | null;
 
@@ -41,13 +42,14 @@ type Props = {
   studentDetails: StudentDetails;
 };
 
-type StudentTab = "overview" | "team" | "profile";
+type StudentTab = "overview" | "team" | "profile" | "mentor_request";
 type MentorTab = "overview" | "team";
 
 const STUDENT_TABS: { id: StudentTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "team", label: "Team" },
   { id: "profile", label: "Info" },
+  { id: "mentor_request", label: "Request Mentor" },
 ];
 
 const MENTOR_TABS: { id: MentorTab; label: string }[] = [
@@ -91,6 +93,63 @@ function TeamView({ team, readOnly }: { team: Team; readOnly: boolean }) {
   );
 }
 
+function MentorRequestTab() {
+  const [state, formAction, isPending] = useActionState(saveMentorRequest, null);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+          Request a Mentor
+        </h2>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          Describe what kind of support or guidance you&apos;re looking for. An admin will review your request and connect you with a mentor.
+        </p>
+      </div>
+
+      {state?.error && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400"
+        >
+          {state.error}
+        </div>
+      )}
+
+      {state?.success && (
+        <div
+          role="status"
+          className="rounded-md border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400"
+        >
+          Your mentor request has been saved.
+        </div>
+      )}
+
+      <form action={formAction} className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            What assistance are you looking for?
+          </span>
+          <textarea
+            name="memo"
+            rows={5}
+            maxLength={1000}
+            placeholder="e.g. Help with structuring our STEM presentation, feedback on our research approach, guidance on the art category theme..."
+            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={isPending}
+          className="self-start rounded-md bg-brand-dark px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark-hover disabled:opacity-50"
+        >
+          {isPending ? "Saving…" : "Submit Request"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function DashboardTabs({
   email,
   userId,
@@ -117,7 +176,7 @@ export default function DashboardTabs({
   return (
     <main className="flex w-full max-w-2xl flex-col rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <p className="mb-1 text-sm font-medium tracking-widest text-brand-dark uppercase dark:text-brand-gold">
-        TrExcel 2027
+        TrExcel 2026-2027
       </p>
       <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
         {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
@@ -155,6 +214,7 @@ export default function DashboardTabs({
             {studentTab === "profile" && (
               <ProfileForm details={studentDetails} userId={userId} />
             )}
+            {studentTab === "mentor_request" && <MentorRequestTab />}
           </div>
         </>
       )}

@@ -208,6 +208,30 @@ export async function saveTeamOverview(
   return { success: true };
 }
 
+export async function saveMentorRequest(
+  _prev: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const memo = (formData.get("memo") as string)?.trim().slice(0, 1000) || null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase
+    .from("profiles")
+    .update({ mentor_request_memo: memo } as any)
+    .eq("id", user.id) as any);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 export async function saveStudentInfo(
   _prev: ProfileActionState,
   formData: FormData,

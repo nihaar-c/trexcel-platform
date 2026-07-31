@@ -29,7 +29,7 @@ export default async function JudgeScoringPage({
   const [teamResult, submissionResult, existingScores] = await Promise.all([
     supabase
       .from("teams")
-      .select("team_name, count, members:profiles(id, email, first_name, last_name, role)")
+      .select("team_name, count, members:profiles(id, first_name, last_name, role)")
       .eq("id", teamId)
       .single(),
     supabase
@@ -96,7 +96,6 @@ export default async function JudgeScoringPage({
 
   const members = (team.members ?? []) as {
     id: string;
-    email: string | null;
     first_name: string | null;
     last_name: string | null;
     role: string | null;
@@ -171,7 +170,7 @@ export default async function JudgeScoringPage({
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">
                     {m.first_name || m.last_name
                       ? `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim()
-                      : m.email ?? "Unknown"}
+                      : "Unknown"}
                   </p>
                   {m.role === "mentor" && (
                     <span className="text-xs text-amber-600 dark:text-amber-400">

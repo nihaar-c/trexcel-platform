@@ -60,7 +60,7 @@ export default async function SubmissionsPage() {
 
         <div className="mb-8">
           <p className="mb-1 text-xs font-semibold tracking-widest text-brand-dark uppercase dark:text-brand-gold">
-            TrExcel 2027
+            TrExcel 2026-2027
           </p>
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
             {team.team_name}

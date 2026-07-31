@@ -36,42 +36,55 @@ const AWARDS = [
 ];
 
 const logoUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/logo.jpg`;
+const heroImageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/logo-header.jpg`;
 
 export default function Home() {
   return (
     <div className="bg-white dark:bg-zinc-950">
-      {/* Hero — full width gold banner */}
-      <section className="flex flex-col items-center bg-brand-gold px-6 py-20 text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={logoUrl}
-          alt="TrExcel logo"
-          width={160}
-          height={160}
-          className="mb-6 h-40 w-40 rounded-full bg-white object-contain p-2 shadow-lg"
-        />
-        <h1 className="max-w-4xl text-6xl font-bold tracking-tight text-zinc-900 sm:text-7xl">
-          TrExcel 2027
-        </h1>
-        <p className="mt-3 text-xl font-semibold text-brand-dark">
-          AI for Equity
-        </p>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-zinc-800">
-          A high school competition combining STEM, Art, and Fitness — inspiring students from underserved communities to learn, create, and lead.
-        </p>
-        <div className="mt-8 flex gap-3">
-          <Link
-            href="/login"
-            className="rounded-md bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark-hover"
-          >
-            Register your team
-          </Link>
-          <a
-            href="#about"
-            className="rounded-md border-2 border-brand-dark px-6 py-3 text-sm font-semibold text-brand-dark transition-colors hover:bg-black/10"
-          >
-            Learn more
-          </a>
+      {/* Hero — image background with gold overlay */}
+      <section
+        className="relative flex flex-col items-center px-6 py-32 text-center"
+        style={{
+          backgroundImage: `url(${heroImageUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center 70%",
+        }}
+      >
+        {/* Gold overlay */}
+        <div className="absolute inset-0 bg-brand-gold/80" />
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={logoUrl}
+            alt="TrExcel logo"
+            width={160}
+            height={160}
+            className="mb-6 h-40 w-40 rounded-full bg-white object-contain p-2 shadow-lg"
+          />
+          <h1 className="max-w-4xl text-6xl font-bold tracking-tight text-zinc-900 sm:text-7xl">
+            TrExcel 2026-2027
+          </h1>
+          <p className="mt-3 rounded-full bg-white/70 px-5 py-1.5 text-xl font-bold uppercase tracking-wide text-zinc-900 shadow-sm">
+            Theme: AI for Equity
+          </p>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-zinc-800">
+            A high school competition combining STEM, Art, and Fitness — inspiring students from underserved communities to learn, create, and lead.
+          </p>
+          <div className="mt-8 flex gap-3">
+            <Link
+              href="/login"
+              className="rounded-md bg-brand-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-dark-hover"
+            >
+              Register your team
+            </Link>
+            <a
+              href="#about"
+              className="rounded-md border-2 border-brand-dark px-6 py-3 text-sm font-semibold text-brand-dark transition-colors hover:bg-black/10"
+            >
+              Learn more
+            </a>
+          </div>
         </div>
       </section>
 
@@ -106,7 +119,7 @@ export default function Home() {
         {/* Categories — 3 columns */}
         <section className="mb-16">
           <h2 className="mb-4 text-xs font-semibold tracking-widest text-brand-dark uppercase">
-            Competition Categories
+            Competition Consists of Categories
           </h2>
           <div className="grid gap-5 sm:grid-cols-3">
             {CATEGORIES.map(({ title, description }) => (
