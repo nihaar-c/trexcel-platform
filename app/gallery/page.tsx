@@ -5,13 +5,13 @@ export default function GalleryPage() {
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <div className="mx-auto w-full max-w-3xl px-6 py-12">
-        <p className="mb-1 text-sm font-semibold tracking-widest text-brand-dark uppercase dark:text-brand-gold">
+        <p className="mb-2 text-3xl font-bold tracking-widest text-brand-dark uppercase sm:text-4xl dark:text-brand-gold">
           TrExcel 2026-2027
         </p>
 
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Photo &amp; Video Gallery
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            2025-2026 Photo &amp; Video Gallery
           </h1>
           <a
             href={googlePhotosUrl}
@@ -31,7 +31,7 @@ export default function GalleryPage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={featuredImageUrl}
-          alt="TrExcel 2026-2027 competition"
+          alt="TrExcel 2025-2026 Photo & Video Gallery"
           className="mt-8 w-full rounded-xl object-cover shadow-md"
         />
       </div>

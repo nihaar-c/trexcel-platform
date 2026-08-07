@@ -55,7 +55,7 @@ export default function CompetitionOverview() {
           </li>
           <li className="flex justify-between gap-4">
             <span>Final Competition</span>
-            <span className="font-medium text-zinc-800 dark:text-zinc-200 whitespace-nowrap">February 2027</span>
+            <span className="font-medium text-zinc-800 dark:text-zinc-200 whitespace-nowrap">February 20, 2027</span>
           </li>
         </ul>
       </div>
@@ -82,7 +82,7 @@ export default function CompetitionOverview() {
       <div className={sectionCls}>
         <p className={headingCls}>Final Competition</p>
         <p className="text-zinc-600 dark:text-zinc-400">
-          February 2027 — Top teams present their projects live before judges, participate in the fitness challenge, and compete for scholarships.
+          February 20, 2027 — Top teams present their projects live before judges, participate in the fitness challenge, and compete for scholarships.
         </p>
       </div>
 
