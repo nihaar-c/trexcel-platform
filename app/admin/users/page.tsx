@@ -12,10 +12,24 @@ const ROLE_STYLES: Record<string, string> = {
 export default async function AdminUsersPage() {
   const supabase = await createClient();
 
-  const { data: profiles } = await supabase
+  const { data } = await supabase
     .from("profiles")
     .select("id, email, first_name, last_name, role, team_id, teams(team_name)")
     .order("email");
+
+  // Group users by team, teams sorted alphabetically, unassigned last.
+  const profiles = data
+    ?.slice()
+    .sort((a, b) => {
+      const teamA = (a.teams as { team_name: string } | null)?.team_name ?? "";
+      const teamB = (b.teams as { team_name: string } | null)?.team_name ?? "";
+      if (teamA !== teamB) {
+        if (!teamA) return 1;
+        if (!teamB) return -1;
+        return teamA.localeCompare(teamB);
+      }
+      return (a.email ?? "").localeCompare(b.email ?? "");
+    });
 
   return (
     <div>

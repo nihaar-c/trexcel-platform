@@ -27,7 +27,7 @@ export default async function DashboardPage() {
   const isStudent = role === "student" || !role;
   const isMentor = role === "mentor";
 
-  const [teamResult, studentDetailsResult] = await Promise.all([
+  const [teamResult, studentDetailsResult, waiverResult] = await Promise.all([
     (isStudent || isMentor) && profile?.team_id
       ? supabase
           .from("teams")
@@ -42,6 +42,15 @@ export default async function DashboardPage() {
           .eq("user_id", user.id)
           .single()
       : Promise.resolve({ data: null }),
+    isStudent
+      ? supabase
+          .from("waivers")
+          .select(
+            "student_full_name, parent_name, parent_phone, parent_email, parent_signature, student_signature, signed_date, media_consent, agreed, file_url, completed_at",
+          )
+          .eq("user_id", user.id)
+          .single()
+      : Promise.resolve({ data: null }),
   ]);
 
   return (
@@ -52,6 +61,7 @@ export default async function DashboardPage() {
         profile={profile ? { ...profile, role: effectiveRole } : profile}
         team={teamResult.data}
         studentDetails={studentDetailsResult.data}
+        waiver={waiverResult.data}
       />
     </div>
   );

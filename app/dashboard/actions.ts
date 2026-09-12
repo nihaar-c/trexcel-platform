@@ -133,6 +133,20 @@ export async function upsertSubmission(
   const ALLOWED_CATEGORIES = ["STEM", "ART", "FITNESS"] as const;
   const ALLOWED_STATUSES = ["draft", "submitted"] as const;
 
+  // Waiver gate: a finalized submission requires this user to have a completed
+  // waiver. Drafts are still allowed so students can save progress beforehand.
+  const statusIsFinal = (formData.get("status") as string)?.trim() === "submitted";
+  if (statusIsFinal) {
+    const { data: waiver } = await supabase
+      .from("waivers")
+      .select("completed_at")
+      .eq("user_id", user.id)
+      .single();
+    if (!waiver?.completed_at) {
+      return { error: "You must complete your waiver before submitting." };
+    }
+  }
+
   const str = (k: string) => (formData.get(k) as string)?.trim() || null;
   const category = str("category");
   if (!category || !ALLOWED_CATEGORIES.includes(category as typeof ALLOWED_CATEGORIES[number])) {
@@ -229,6 +243,73 @@ export async function saveMentorRequest(
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function saveWaiver(
+  _prev: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const str = (key: string) => (formData.get(key) as string)?.trim() || null;
+  const fileUrl = str("file_url");
+  const agreed = formData.get("agreed") === "on" || formData.get("agreed") === "true";
+  const mediaConsent =
+    formData.get("media_consent") === "on" || formData.get("media_consent") === "true";
+
+  const studentFullName = str("student_full_name");
+  const parentName = str("parent_name");
+  const parentPhone = str("parent_phone");
+  const parentEmail = str("parent_email");
+  const parentSignature = str("parent_signature");
+  const studentSignature = str("student_signature");
+  const signedDate = str("signed_date");
+
+  // Two completion paths: a signed PDF was uploaded, OR the full form was filled
+  // out and the terms were agreed to.
+  const formComplete =
+    !!studentFullName &&
+    !!parentName &&
+    !!parentPhone &&
+    !!parentEmail &&
+    !!parentSignature &&
+    !!studentSignature &&
+    !!signedDate &&
+    agreed;
+  const isComplete = !!fileUrl || formComplete;
+
+  if (!isComplete) {
+    return { error: "Fill out the full waiver and agree to the terms, or upload a signed copy." };
+  }
+
+  const { error } = await supabase.from("waivers").upsert(
+    {
+      user_id: user.id,
+      student_full_name: studentFullName,
+      parent_name: parentName,
+      parent_phone: parentPhone,
+      parent_email: parentEmail,
+      parent_signature: parentSignature,
+      student_signature: studentSignature,
+      signed_date: signedDate,
+      media_consent: mediaConsent,
+      agreed,
+      file_url: fileUrl,
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/submissions");
   return { success: true };
 }
 

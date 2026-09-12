@@ -25,6 +25,7 @@ type Props = {
   team: Team;
   submissionsByCategory: Record<string, Submission>;
   readOnly?: boolean;
+  waiverComplete?: boolean;
 };
 
 const CATEGORIES = ["STEM", "ART", "FITNESS"] as const;
@@ -48,9 +49,17 @@ const CATEGORY_ACTIVE: Record<Category, string> = {
   FITNESS: "border-b-2 border-b-emerald-400 text-zinc-900 dark:text-zinc-50",
 };
 
-export default function SubmissionsClient({ team, submissionsByCategory, readOnly = false }: Props) {
+export default function SubmissionsClient({
+  team,
+  submissionsByCategory,
+  readOnly = false,
+  waiverComplete = true,
+}: Props) {
   const [activeCategory, setActiveCategory] = useState<Category>("STEM");
   const activeSub = submissionsByCategory[activeCategory] ?? null;
+
+  // Submissions require both a team and a completed waiver.
+  const effectiveReadOnly = readOnly || !waiverComplete;
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,12 +72,21 @@ export default function SubmissionsClient({ team, submissionsByCategory, readOnl
         </div>
       )}
 
+      {!readOnly && !waiverComplete && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+          You must complete your participant waiver before you can submit.{" "}
+          <a href="/dashboard" className="font-semibold underline underline-offset-2">
+            Go to the Waivers tab →
+          </a>
+        </div>
+      )}
+
       {/* Team overview */}
       <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <p className="mb-4 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
           Team Overview — applies to all submissions
         </p>
-        <TeamOverviewForm theme={team.theme} memo={team.memo} readOnly={readOnly} />
+        <TeamOverviewForm theme={team.theme} memo={team.memo} readOnly={effectiveReadOnly} />
       </div>
 
       {/* Category tabs */}
@@ -109,7 +127,7 @@ export default function SubmissionsClient({ team, submissionsByCategory, readOnl
           key={activeCategory}
           category={activeCategory}
           submission={activeSub}
-          readOnly={readOnly}
+          readOnly={effectiveReadOnly}
         />
       </div>
     </div>

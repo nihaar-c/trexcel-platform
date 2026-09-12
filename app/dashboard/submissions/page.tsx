@@ -23,7 +23,7 @@ export default async function SubmissionsPage() {
 
   const hasTeam = !!profile?.team_id;
 
-  const [teamResult, submissionsResult] = await Promise.all([
+  const [teamResult, submissionsResult, waiverResult] = await Promise.all([
     hasTeam
       ? supabase
           .from("teams")
@@ -39,7 +39,14 @@ export default async function SubmissionsPage() {
           )
           .eq("team_id", profile!.team_id!)
       : Promise.resolve({ data: [] }),
+    supabase
+      .from("waivers")
+      .select("completed_at")
+      .eq("user_id", user.id)
+      .single(),
   ]);
+
+  const waiverComplete = !!waiverResult.data?.completed_at;
 
   const team = teamResult.data ?? { team_name: "Your Team", theme: null, memo: null };
 
@@ -74,6 +81,7 @@ export default async function SubmissionsPage() {
           team={team}
           submissionsByCategory={submissionsByCategory}
           readOnly={!hasTeam}
+          waiverComplete={waiverComplete}
         />
       </div>
     </div>

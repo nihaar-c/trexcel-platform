@@ -5,6 +5,7 @@ import Link from "next/link";
 import TeamSetup from "./TeamSetup";
 import ProfileForm from "./ProfileForm";
 import CompetitionOverview from "./CompetitionOverview";
+import WaiverTab from "./WaiverTab";
 import { saveMentorRequest } from "./actions";
 
 type Profile = { role: string | null; team_id: string | null } | null;
@@ -34,21 +35,37 @@ type StudentDetails = {
   avatar_url: string | null;
 } | null;
 
+type Waiver = {
+  student_full_name: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
+  parent_email: string | null;
+  parent_signature: string | null;
+  student_signature: string | null;
+  signed_date: string | null;
+  media_consent: boolean | null;
+  agreed: boolean | null;
+  file_url: string | null;
+  completed_at: string | null;
+} | null;
+
 type Props = {
   email: string;
   userId: string;
   profile: Profile;
   team: Team;
   studentDetails: StudentDetails;
+  waiver: Waiver;
 };
 
-type StudentTab = "overview" | "team" | "profile" | "mentor_request";
+type StudentTab = "overview" | "team" | "profile" | "waiver" | "mentor_request";
 type MentorTab = "overview" | "team";
 
 const STUDENT_TABS: { id: StudentTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "team", label: "Team" },
   { id: "profile", label: "Info" },
+  { id: "waiver", label: "Waivers" },
   { id: "mentor_request", label: "Request Mentor" },
 ];
 
@@ -156,6 +173,7 @@ export default function DashboardTabs({
   profile,
   team,
   studentDetails,
+  waiver,
 }: Props) {
   const role = profile?.role ?? "student";
   const isStudent = role === "student" || !profile?.role;
@@ -213,6 +231,9 @@ export default function DashboardTabs({
             {studentTab === "team" && <TeamView team={team} readOnly={false} />}
             {studentTab === "profile" && (
               <ProfileForm details={studentDetails} userId={userId} />
+            )}
+            {studentTab === "waiver" && (
+              <WaiverTab waiver={waiver} userId={userId} />
             )}
             {studentTab === "mentor_request" && <MentorRequestTab />}
           </div>

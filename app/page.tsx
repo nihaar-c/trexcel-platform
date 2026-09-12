@@ -43,10 +43,12 @@ const AWARDS = [
 const logoUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/logo.jpg`;
 const heroImageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/logo-header.jpg`;
 
-const SPONSOR_LOGOS = [
-  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/t2.jpg`,
-  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/t1.jpg`,
-  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/t3.jpeg`,
+const sponsorUrl = (file: string) =>
+  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/${file}`;
+
+const SPONSOR_ROWS = [
+  [sponsorUrl("t1_new.png"), sponsorUrl("t5.png")],
+  [sponsorUrl("t2_new.jpg"), sponsorUrl("t3.jpg.jpeg"), sponsorUrl("t4.png")],
 ];
 
 export default function Home() {
@@ -104,7 +106,7 @@ export default function Home() {
 
         {/* About — full width */}
         <section id="about" className="mb-16">
-          <h2 className="mb-4 text-xs font-semibold tracking-widest text-brand-dark uppercase">
+          <h2 className="mb-4 text-sm font-bold tracking-widest text-brand-gold uppercase">
             About
           </h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900">
@@ -129,7 +131,7 @@ export default function Home() {
 
         {/* Categories — 3 columns */}
         <section className="mb-16">
-          <h2 className="mb-4 text-xs font-semibold tracking-widest text-brand-dark uppercase">
+          <h2 className="mb-4 text-sm font-bold tracking-widest text-brand-gold uppercase">
             Competition Consists of Categories
           </h2>
           <div className="grid gap-5 sm:grid-cols-3">
@@ -152,7 +154,7 @@ export default function Home() {
         {/* Timeline + Awards side by side */}
         <div className="mb-16 grid gap-8 lg:grid-cols-2">
           <section>
-            <h2 className="mb-4 text-xs font-semibold tracking-widest text-brand-dark uppercase">
+            <h2 className="mb-4 text-sm font-bold tracking-widest text-brand-gold uppercase">
               Competition Timeline
             </h2>
             <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -175,7 +177,7 @@ export default function Home() {
           </section>
 
           <section>
-            <h2 className="mb-4 text-xs font-semibold tracking-widest text-brand-dark uppercase">
+            <h2 className="mb-4 text-sm font-bold tracking-widest text-brand-gold uppercase">
               Awards
             </h2>
             <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -196,7 +198,7 @@ export default function Home() {
 
         {/* Financial Learning Requirement */}
         <section className="mb-16">
-          <h2 className="mb-4 text-xs font-semibold tracking-widest text-brand-dark uppercase">
+          <h2 className="mb-4 text-sm font-bold tracking-widest text-brand-gold uppercase">
             Financial Learning Requirement
           </h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900">
@@ -226,7 +228,7 @@ export default function Home() {
 
         {/* Contact */}
         <section>
-          <h2 className="mb-4 text-xs font-semibold tracking-widest text-brand-dark uppercase">
+          <h2 className="mb-4 text-sm font-bold tracking-widest text-brand-gold uppercase">
             Contact
           </h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
@@ -249,18 +251,29 @@ export default function Home() {
 
         {/* Sponsors */}
         <section className="mt-16">
-          <h2 className="mb-6 text-center text-xs font-semibold tracking-widest text-brand-dark uppercase">
+          <h2 className="mb-8 text-center text-lg font-bold tracking-widest text-brand-gold uppercase">
             Our Sponsors
           </h2>
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            {SPONSOR_LOGOS.map((src, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={i}
-                src={src}
-                alt={`Sponsor ${i + 1}`}
-                className="h-16 w-auto object-contain sm:h-20"
-              />
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 sm:gap-14">
+            {SPONSOR_ROWS.map((row, r) => (
+              <div
+                key={r}
+                className="flex flex-wrap items-center justify-center gap-x-12 gap-y-10 sm:gap-x-16"
+              >
+                {row.map((src, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-center rounded-xl bg-white p-5 shadow-md ring-1 ring-white/10"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      alt={`Sponsor ${r + 1}-${i + 1}`}
+                      className="h-24 w-auto object-contain sm:h-28"
+                    />
+                  </div>
+                ))}
+              </div>
             ))}
           </div>
         </section>

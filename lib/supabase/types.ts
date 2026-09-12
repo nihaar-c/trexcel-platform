@@ -91,8 +91,9 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          mentor_request_memo: string | null
           phone: string | null
-          role: string | null
+          role: Database["public"]["Enums"]["user_role"]
           team_id: string | null
         }
         Insert: {
@@ -100,8 +101,9 @@ export type Database = {
           first_name?: string | null
           id: string
           last_name?: string | null
+          mentor_request_memo?: string | null
           phone?: string | null
-          role?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
           team_id?: string | null
         }
         Update: {
@@ -109,8 +111,9 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          mentor_request_memo?: string | null
           phone?: string | null
-          role?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
           team_id?: string | null
         }
         Relationships: [
@@ -322,6 +325,54 @@ export type Database = {
         }
         Relationships: []
       }
+      waivers: {
+        Row: {
+          agreed: boolean
+          completed_at: string | null
+          file_url: string | null
+          media_consent: boolean
+          parent_email: string | null
+          parent_name: string | null
+          parent_phone: string | null
+          parent_signature: string | null
+          signed_date: string | null
+          student_full_name: string | null
+          student_signature: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agreed?: boolean
+          completed_at?: string | null
+          file_url?: string | null
+          media_consent?: boolean
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          parent_signature?: string | null
+          signed_date?: string | null
+          student_full_name?: string | null
+          student_signature?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agreed?: boolean
+          completed_at?: string | null
+          file_url?: string | null
+          media_consent?: boolean
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          parent_signature?: string | null
+          signed_date?: string | null
+          student_full_name?: string | null
+          student_signature?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -330,7 +381,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "student" | "judge" | "mentor" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -346,12 +397,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -375,11 +426,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -400,11 +451,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -425,11 +476,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -442,11 +493,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -457,6 +508,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["student", "judge", "mentor", "admin"],
+    },
   },
 } as const
