@@ -47,8 +47,8 @@ const sponsorUrl = (file: string) =>
   `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/site/${file}`;
 
 const SPONSOR_ROWS = [
-  [sponsorUrl("t1_new.png"), sponsorUrl("t5.png")],
-  [sponsorUrl("t2_new.jpg"), sponsorUrl("t3.jpg.jpeg"), sponsorUrl("t4.png")],
+  [sponsorUrl("t1_new.png"), sponsorUrl("t3.jpg.jpeg")],
+  [sponsorUrl("t2_new.jpg"), sponsorUrl("t5.png"), sponsorUrl("t4.png")],
 ];
 
 export default function Home() {
@@ -252,7 +252,7 @@ export default function Home() {
         {/* Sponsors */}
         <section className="mt-16">
           <h2 className="mb-8 text-center text-lg font-bold tracking-widest text-brand-gold uppercase">
-            Our Sponsors
+            Our Sponsors & Partners
           </h2>
           <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 sm:gap-14">
             {SPONSOR_ROWS.map((row, r) => (
