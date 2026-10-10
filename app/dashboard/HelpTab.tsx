@@ -1,18 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { submitHelpRequest } from "./actions";
+
+const supabase = createClient();
 
 export default function HelpTab() {
   const [state, setState] = useState<{ error?: string; success?: boolean } | null>(null);
   const [pending, setPending] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setState(null);
     setPending(true);
-    const formData = new FormData(e.currentTarget);
-    const result = await submitHelpRequest(null, formData);
+
+    const message = (new FormData(e.currentTarget).get("message") as string) ?? "";
+
+    let fileUrl: string | null = null;
+    let fileName: string | null = null;
+    const file = fileRef.current?.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        setState({ error: "Attachment must be under 10 MB." });
+        setPending(false);
+        return;
+      }
+      const ext = file.name.split(".").pop() ?? "bin";
+      const path = `${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("help-attachments")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadError) {
+        setState({ error: "File upload failed: " + uploadError.message });
+        setPending(false);
+        return;
+      }
+      const { data } = supabase.storage.from("help-attachments").getPublicUrl(path);
+      fileUrl = data.publicUrl;
+      fileName = file.name;
+    }
+
+    const result = await submitHelpRequest(message, fileUrl, fileName);
     setState(result);
     setPending(false);
   }
@@ -45,7 +76,7 @@ export default function HelpTab() {
           Your message has been sent! We&apos;ll be in touch soon.
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               What do you need help with?

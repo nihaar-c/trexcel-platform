@@ -5,8 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ---------------------------------------------------------------------------
 const mockGetUser = vi.hoisted(() => vi.fn());
 const mockFrom = vi.hoisted(() => vi.fn());
-const mockUpload = vi.hoisted(() => vi.fn());
-const mockGetPublicUrl = vi.hoisted(() => vi.fn());
 const mockResendSend = vi.hoisted(() => vi.fn());
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -23,12 +21,6 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
     from: mockFrom,
-    storage: {
-      from: vi.fn(() => ({
-        upload: mockUpload,
-        getPublicUrl: mockGetPublicUrl,
-      })),
-    },
   })),
 }));
 
@@ -51,16 +43,8 @@ function makeBuilder(result: { data: unknown; error: unknown }) {
   return b;
 }
 
-function fd(fields: Record<string, string | File>): FormData {
-  const form = new FormData();
-  for (const [k, v] of Object.entries(fields)) form.append(k, v);
-  return form;
-}
-
-function fakeFile(name: string, sizeBytes: number, type = "image/png"): File {
-  const file = new File([new Uint8Array(Math.min(sizeBytes, 10))], name, { type });
-  Object.defineProperty(file, "size", { value: sizeBytes });
-  return file;
+function withDetails(firstName: string | null, lastName: string | null) {
+  return makeBuilder({ data: { first_name: firstName, last_name: lastName }, error: null });
 }
 
 // ---------------------------------------------------------------------------
@@ -71,8 +55,6 @@ describe("submitHelpRequest", () => {
   beforeEach(() => {
     mockGetUser.mockReset();
     mockFrom.mockReset();
-    mockUpload.mockReset();
-    mockGetPublicUrl.mockReset();
     mockResendSend.mockReset();
 
     process.env.RESEND_API_KEY = "re_test_key";
@@ -82,7 +64,7 @@ describe("submitHelpRequest", () => {
   it("returns an error when the user is not authenticated", async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } });
 
-    const result = await submitHelpRequest(null, fd({ message: "Help!" }));
+    const result = await submitHelpRequest("Help!", null, null);
 
     expect(result).toEqual({ error: "Not authenticated." });
     expect(mockResendSend).not.toHaveBeenCalled();
@@ -90,40 +72,20 @@ describe("submitHelpRequest", () => {
 
   it("returns an error when the message is empty", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "s@test.com" } } });
-    mockFrom.mockImplementation(() =>
-      makeBuilder({ data: { first_name: "Jane", last_name: "Doe" }, error: null })
-    );
+    mockFrom.mockImplementation(() => withDetails("Jane", "Doe"));
 
-    const result = await submitHelpRequest(null, fd({ message: "   " }));
+    const result = await submitHelpRequest("   ", null, null);
 
     expect(result?.error).toBeTruthy();
     expect(mockResendSend).not.toHaveBeenCalled();
   });
 
-  it("returns an error when the attachment exceeds 10 MB", async () => {
-    mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "s@test.com" } } });
-    mockFrom.mockImplementation(() =>
-      makeBuilder({ data: { first_name: "Jane", last_name: "Doe" }, error: null })
-    );
-
-    const bigFile = fakeFile("big.pdf", 11 * 1024 * 1024);
-    const result = await submitHelpRequest(
-      null,
-      fd({ message: "Please help", attachment: bigFile })
-    );
-
-    expect(result).toEqual({ error: "Attachment must be under 10 MB." });
-    expect(mockUpload).not.toHaveBeenCalled();
-  });
-
   it("sends an email and returns success when no attachment is provided", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "student@test.com" } } });
-    mockFrom.mockImplementation(() =>
-      makeBuilder({ data: { first_name: "Jane", last_name: "Doe" }, error: null })
-    );
+    mockFrom.mockImplementation(() => withDetails("Jane", "Doe"));
     mockResendSend.mockResolvedValue({ data: {}, error: null });
 
-    const result = await submitHelpRequest(null, fd({ message: "I need help logging in." }));
+    const result = await submitHelpRequest("I need help logging in.", null, null);
 
     expect(result).toEqual({ success: true });
     expect(mockResendSend).toHaveBeenCalledOnce();
@@ -134,69 +96,68 @@ describe("submitHelpRequest", () => {
     expect(call.html).not.toContain("Attachment");
   });
 
-  it("uploads the file and includes its URL in the email", async () => {
+  it("includes the file URL and name in the email when an attachment is provided", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "student@test.com" } } });
-    mockFrom.mockImplementation(() =>
-      makeBuilder({ data: { first_name: "Jane", last_name: "Doe" }, error: null })
-    );
-    mockUpload.mockResolvedValue({ data: {}, error: null });
-    mockGetPublicUrl.mockReturnValue({
-      data: { publicUrl: "https://storage.example.com/help-attachments/u-1/screenshot.png" },
-    });
+    mockFrom.mockImplementation(() => withDetails("Jane", "Doe"));
     mockResendSend.mockResolvedValue({ data: {}, error: null });
 
-    const file = fakeFile("screenshot.png", 500);
     const result = await submitHelpRequest(
-      null,
-      fd({ message: "See attached screenshot.", attachment: file })
+      "See attached screenshot.",
+      "https://storage.example.com/help-attachments/screenshot.png",
+      "screenshot.png",
     );
 
     expect(result).toEqual({ success: true });
-    expect(mockUpload).toHaveBeenCalledOnce();
-    const emailCall = mockResendSend.mock.calls[0][0];
-    expect(emailCall.html).toContain("https://storage.example.com/help-attachments/u-1/screenshot.png");
+    const call = mockResendSend.mock.calls[0][0];
+    expect(call.html).toContain("https://storage.example.com/help-attachments/screenshot.png");
+    expect(call.html).toContain("screenshot.png");
   });
 
-  it("returns an error when the storage upload fails", async () => {
+  it("escapes HTML in the file name to prevent injection", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "student@test.com" } } });
-    mockFrom.mockImplementation(() =>
-      makeBuilder({ data: { first_name: "Jane", last_name: "Doe" }, error: null })
-    );
-    mockUpload.mockResolvedValue({ data: null, error: { message: "bucket not found" } });
+    mockFrom.mockImplementation(() => withDetails("Jane", "Doe"));
+    mockResendSend.mockResolvedValue({ data: {}, error: null });
 
-    const file = fakeFile("doc.pdf", 500, "application/pdf");
-    const result = await submitHelpRequest(
-      null,
-      fd({ message: "Here is my file.", attachment: file })
+    await submitHelpRequest(
+      "Here is the file.",
+      "https://storage.example.com/x.png",
+      '<img src=x onerror=alert(1)>.png',
     );
 
-    expect(result?.error).toMatch(/upload failed/i);
-    expect(mockResendSend).not.toHaveBeenCalled();
+    const call = mockResendSend.mock.calls[0][0];
+    expect(call.html).not.toContain("<img");
+    expect(call.html).toContain("&lt;img");
   });
 
   it("returns an error when Resend fails to send", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "student@test.com" } } });
-    mockFrom.mockImplementation(() =>
-      makeBuilder({ data: { first_name: "Jane", last_name: "Doe" }, error: null })
-    );
+    mockFrom.mockImplementation(() => withDetails("Jane", "Doe"));
     mockResendSend.mockResolvedValue({ data: null, error: { message: "rate limit" } });
 
-    const result = await submitHelpRequest(null, fd({ message: "Please help me!" }));
+    const result = await submitHelpRequest("Please help me!", null, null);
 
     expect(result?.error).toBeTruthy();
-    expect(result?.error).not.toContain("rate limit"); // don't leak internal details
+    expect(result?.error).not.toContain("rate limit");
   });
 
-  it("falls back to the user email as the sender name when student_details has no name", async () => {
+  it("returns an error when Resend throws unexpectedly", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "student@test.com" } } });
+    mockFrom.mockImplementation(() => withDetails("Jane", "Doe"));
+    mockResendSend.mockRejectedValue(new Error("network timeout"));
+
+    const result = await submitHelpRequest("Help!", null, null);
+
+    expect(result?.error).toBeTruthy();
+  });
+
+  it("falls back to user email in the subject when student_details has no name", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "anon@test.com" } } });
-    mockFrom.mockImplementation(() =>
-      makeBuilder({ data: { first_name: null, last_name: null }, error: null })
-    );
+    mockFrom.mockImplementation(() => withDetails(null, null));
     mockResendSend.mockResolvedValue({ data: {}, error: null });
 
-    await submitHelpRequest(null, fd({ message: "Who am I?" }));
+    await submitHelpRequest("Who am I?", null, null);
 
-    const emailCall = mockResendSend.mock.calls[0][0];
-    expect(emailCall.subject).toContain("anon@test.com");
+    const call = mockResendSend.mock.calls[0][0];
+    expect(call.subject).toContain("anon@test.com");
   });
 });

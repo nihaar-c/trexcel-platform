@@ -315,8 +315,9 @@ export async function saveWaiver(
 }
 
 export async function submitHelpRequest(
-  _prev: ProfileActionState,
-  formData: FormData,
+  message: string,
+  fileUrl: string | null,
+  fileName: string | null,
 ): Promise<ProfileActionState> {
   try {
     const supabase = await createClient();
@@ -325,8 +326,8 @@ export async function submitHelpRequest(
     } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated." };
 
-    const message = (formData.get("message") as string)?.trim().slice(0, 2000);
-    if (!message) return { error: "Please describe your issue before submitting." };
+    const trimmed = message.trim().slice(0, 2000);
+    if (!trimmed) return { error: "Please describe your issue before submitting." };
 
     const { data: details } = await supabase
       .from("student_details")
@@ -338,26 +339,11 @@ export async function submitHelpRequest(
       ? `${details.first_name} ${details.last_name ?? ""}`.trim()
       : user.email ?? "Unknown student";
 
-    let attachmentLine = "";
-    const file = formData.get("attachment") as File | null;
-    if (file && file.size > 0) {
-      if (file.size > 10 * 1024 * 1024) {
-        return { error: "Attachment must be under 10 MB." };
-      }
-      const ext = file.name.split(".").pop() ?? "bin";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const bytes = await file.arrayBuffer();
-      const { error: uploadError } = await supabase.storage
-        .from("help-attachments")
-        .upload(path, bytes, { contentType: file.type, upsert: true });
-      if (uploadError) return { error: "File upload failed: " + uploadError.message };
+    const esc = (s: string) => s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-      const { data: urlData } = supabase.storage
-        .from("help-attachments")
-        .getPublicUrl(path);
-      const safeName = file.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      attachmentLine = `<p><strong>Attachment:</strong> <a href="${urlData.publicUrl}">${safeName}</a></p>`;
-    }
+    const attachmentLine = fileUrl && fileName
+      ? `<p><strong>Attachment:</strong> <a href="${fileUrl}">${esc(fileName)}</a></p>`
+      : "";
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const toEmail = process.env.HELP_EMAIL ?? "nihaar.char@gmail.com";
@@ -372,7 +358,7 @@ export async function submitHelpRequest(
         <p><strong>Email:</strong> ${user.email}</p>
         <hr />
         <p><strong>Message:</strong></p>
-        <p style="white-space:pre-wrap">${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+        <p style="white-space:pre-wrap">${esc(trimmed)}</p>
         ${attachmentLine}
       `,
     });
