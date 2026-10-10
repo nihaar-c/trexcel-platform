@@ -97,6 +97,7 @@ export default function HelpTab() {
               <span className="font-normal text-zinc-400">(optional, max 10 MB)</span>
             </span>
             <input
+              ref={fileRef}
               name="attachment"
               type="file"
               className="text-sm text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-300"
