@@ -194,7 +194,7 @@ export default function DashboardTabs({
     }`;
 
   return (
-    <main className="flex w-full max-w-2xl flex-col rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <main className="flex w-full max-w-4xl flex-col rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <p className="mb-1 text-sm font-medium tracking-widest text-brand-dark uppercase dark:text-brand-gold">
         TrExcel 2026-2027
       </p>
