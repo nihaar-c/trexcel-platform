@@ -96,7 +96,7 @@ describe("submitHelpRequest", () => {
     expect(call.html).not.toContain("Attachment");
   });
 
-  it("includes the file URL and name in the email when an attachment is provided", async () => {
+  it("includes the attachment section with URL and name when both are provided", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "student@test.com" } } });
     mockFrom.mockImplementation(() => withDetails("Jane", "Doe"));
     mockResendSend.mockResolvedValue({ data: {}, error: null });
@@ -109,8 +109,21 @@ describe("submitHelpRequest", () => {
 
     expect(result).toEqual({ success: true });
     const call = mockResendSend.mock.calls[0][0];
+    expect(call.html).toContain("Attachment");
     expect(call.html).toContain("https://storage.example.com/help-attachments/screenshot.png");
     expect(call.html).toContain("screenshot.png");
+  });
+
+  it("omits the attachment section when fileUrl is null (no file selected)", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "u-1", email: "student@test.com" } } });
+    mockFrom.mockImplementation(() => withDetails("Jane", "Doe"));
+    mockResendSend.mockResolvedValue({ data: {}, error: null });
+
+    await submitHelpRequest("Just a text message.", null, null);
+
+    const call = mockResendSend.mock.calls[0][0];
+    expect(call.html).not.toContain("Attachment");
+    expect(call.html).not.toContain("href");
   });
 
   it("escapes HTML in the file name to prevent injection", async () => {
