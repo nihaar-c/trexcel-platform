@@ -1,11 +1,21 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useState } from "react";
 import { submitHelpRequest } from "./actions";
 
 export default function HelpTab() {
-  const [state, formAction, isPending] = useActionState(submitHelpRequest, null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [state, setState] = useState<{ error?: string; success?: boolean } | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setState(null);
+    setPending(true);
+    const formData = new FormData(e.currentTarget);
+    const result = await submitHelpRequest(null, formData);
+    setState(result);
+    setPending(false);
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -35,7 +45,7 @@ export default function HelpTab() {
           Your message has been sent! We&apos;ll be in touch soon.
         </div>
       ) : (
-        <form action={formAction} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               What do you need help with?
@@ -56,7 +66,6 @@ export default function HelpTab() {
               <span className="font-normal text-zinc-400">(optional, max 10 MB)</span>
             </span>
             <input
-              ref={fileRef}
               name="attachment"
               type="file"
               className="text-sm text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-300"
@@ -65,10 +74,10 @@ export default function HelpTab() {
 
           <button
             type="submit"
-            disabled={isPending}
+            disabled={pending}
             className="self-start rounded-md bg-brand-dark px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark-hover disabled:opacity-50"
           >
-            {isPending ? "Sending…" : "Submit"}
+            {pending ? "Sending…" : "Submit"}
           </button>
         </form>
       )}
