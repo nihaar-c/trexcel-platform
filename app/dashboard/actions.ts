@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { randomBytes } from "crypto";
+import { Resend } from "resend";
 
 type ActionState = { error: string } | null;
 type ProfileActionState = { error?: string; success?: boolean } | null;
@@ -310,6 +311,73 @@ export async function saveWaiver(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/submissions");
+  return { success: true };
+}
+
+export async function submitHelpRequest(
+  _prev: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const message = (formData.get("message") as string)?.trim().slice(0, 2000);
+  if (!message) return { error: "Please describe your issue before submitting." };
+
+  const { data: details } = await supabase
+    .from("student_details")
+    .select("first_name, last_name")
+    .eq("user_id", user.id)
+    .single();
+
+  const name = details?.first_name
+    ? `${details.first_name} ${details.last_name ?? ""}`.trim()
+    : user.email ?? "Unknown student";
+
+  let attachmentLine = "";
+  const file = formData.get("attachment") as File | null;
+  if (file && file.size > 0) {
+    if (file.size > 10 * 1024 * 1024) {
+      return { error: "Attachment must be under 10 MB." };
+    }
+    const ext = file.name.split(".").pop() ?? "bin";
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const bytes = await file.arrayBuffer();
+    const { error: uploadError } = await supabase.storage
+      .from("help-attachments")
+      .upload(path, bytes, { contentType: file.type, upsert: true });
+    if (uploadError) return { error: "File upload failed: " + uploadError.message };
+
+    const { data: urlData } = supabase.storage
+      .from("help-attachments")
+      .getPublicUrl(path);
+    const safeName = file.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    attachmentLine = `<p><strong>Attachment:</strong> <a href="${urlData.publicUrl}">${safeName}</a></p>`;
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const toEmail = process.env.HELP_EMAIL ?? "chayesha@gmail.com";
+
+  const { error: emailError } = await resend.emails.send({
+    from: "onboarding@resend.dev",
+    to: [toEmail],
+    subject: `Help Request from ${name}`,
+    html: `
+      <h2>Student Help Request</h2>
+      <p><strong>From:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${user.email}</p>
+      <hr />
+      <p><strong>Message:</strong></p>
+      <p style="white-space:pre-wrap">${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+      ${attachmentLine}
+    `,
+  });
+
+  if (emailError) return { error: "Could not send your request. Please try again." };
+
   return { success: true };
 }
 

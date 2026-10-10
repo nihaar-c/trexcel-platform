@@ -13,6 +13,7 @@ const labelCls = "text-sm font-medium text-zinc-700 dark:text-zinc-300";
 export default function LoginPage() {
   const [view, setView] = useState<View>("auth");
   const [error, setError] = useState<string | null>(null);
+  const [confirmEmailSent, setConfirmEmailSent] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -52,8 +53,22 @@ export default function LoginPage() {
         setError("An account with this email already exists. Log in or reset your password.");
         return;
       }
+      // No session means email confirmation is required — don't redirect yet.
+      if (!data.session) {
+        if (data.user) {
+          // Profile insert will be retried via trigger or on first confirmed login.
+          // Best-effort attempt here; failure is non-fatal since session isn't active.
+          await insertProfile(data.user.id, email);
+        }
+        setConfirmEmailSent(true);
+        return;
+      }
       if (data.user) {
-        await insertProfile(data.user.id, email);
+        const { error: profileError } = await insertProfile(data.user.id, email);
+        if (profileError) {
+          setError("Account created but profile setup failed. Please contact support.");
+          return;
+        }
       }
       window.location.href = "/dashboard";
     });
@@ -96,7 +111,20 @@ export default function LoginPage() {
           </div>
         )}
 
-        {view === "auth" ? (
+        {confirmEmailSent ? (
+          <div className="flex flex-col gap-4">
+            <p className="rounded-md bg-green-50 px-3 py-3 text-sm text-green-700 dark:bg-green-950 dark:text-green-400">
+              Check your email for a confirmation link, then come back to log in.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setError(null); setConfirmEmailSent(false); }}
+              className="text-center text-xs text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+            >
+              Back to log in
+            </button>
+          </div>
+        ) : view === "auth" ? (
           <form className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="email" className={labelCls}>Email</label>

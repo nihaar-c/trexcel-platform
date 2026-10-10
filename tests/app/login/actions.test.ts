@@ -17,7 +17,7 @@ beforeEach(() => {
 });
 
 describe("insertProfile", () => {
-  it("inserts a student profile row for the given user", async () => {
+  it("inserts a student profile row with the correct payload", async () => {
     insert.mockResolvedValue({ error: null });
 
     await insertProfile("user-123", "student@example.com");
@@ -27,5 +27,29 @@ describe("insertProfile", () => {
       email: "student@example.com",
       role: "student",
     });
+  });
+
+  it("returns { error: null } on success", async () => {
+    insert.mockResolvedValue({ error: null });
+
+    const result = await insertProfile("user-123", "student@example.com");
+
+    expect(result).toEqual({ error: null });
+  });
+
+  it("returns { error: <message> } when the database insert fails", async () => {
+    insert.mockResolvedValue({ error: { message: "RLS policy violation" } });
+
+    const result = await insertProfile("user-456", "other@example.com");
+
+    expect(result).toEqual({ error: "RLS policy violation" });
+  });
+
+  it("returns { error: null } when the database error field is undefined", async () => {
+    insert.mockResolvedValue({ error: undefined });
+
+    const result = await insertProfile("user-789", "third@example.com");
+
+    expect(result).toEqual({ error: null });
   });
 });

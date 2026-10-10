@@ -6,6 +6,7 @@ import TeamSetup from "./TeamSetup";
 import ProfileForm from "./ProfileForm";
 import CompetitionOverview from "./CompetitionOverview";
 import WaiverTab from "./WaiverTab";
+import HelpTab from "./HelpTab";
 import { saveMentorRequest } from "./actions";
 
 type Profile = { role: string | null; team_id: string | null } | null;
@@ -58,7 +59,7 @@ type Props = {
   waiver: Waiver;
 };
 
-type StudentTab = "overview" | "team" | "profile" | "waiver" | "mentor_request";
+type StudentTab = "overview" | "team" | "profile" | "waiver" | "mentor_request" | "help";
 type MentorTab = "overview" | "team";
 
 const STUDENT_TABS: { id: StudentTab; label: string }[] = [
@@ -67,6 +68,7 @@ const STUDENT_TABS: { id: StudentTab; label: string }[] = [
   { id: "profile", label: "Info" },
   { id: "waiver", label: "Waivers" },
   { id: "mentor_request", label: "Request Mentor" },
+  { id: "help", label: "Help" },
 ];
 
 const MENTOR_TABS: { id: MentorTab; label: string }[] = [
@@ -236,6 +238,7 @@ export default function DashboardTabs({
               <WaiverTab waiver={waiver} userId={userId} />
             )}
             {studentTab === "mentor_request" && <MentorRequestTab />}
+            {studentTab === "help" && <HelpTab />}
           </div>
         </>
       )}

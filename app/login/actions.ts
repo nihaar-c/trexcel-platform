@@ -2,11 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function insertProfile(userId: string, email: string) {
+export async function insertProfile(userId: string, email: string): Promise<{ error: string | null }> {
   const supabase = await createClient();
-  await supabase.from("profiles").insert({
+  const { error } = await supabase.from("profiles").insert({
     id: userId,
     email,
     role: "student",
   });
+  return { error: error?.message ?? null };
 }
