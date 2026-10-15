@@ -92,7 +92,7 @@ function TeamView({ team, readOnly }: { team: Team; readOnly: boolean }) {
           {team.team_name}
         </h2>
         <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-          {team.count ?? 1} / 4 members
+          {team.count ?? 1} / 3 members
         </p>
       </div>
       {!readOnly && (
