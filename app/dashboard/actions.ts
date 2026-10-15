@@ -81,31 +81,15 @@ export async function joinTeam(
   if (!inviteCode) return { error: "Invite code is required." };
   if (!/^[A-F0-9]{6}$/.test(inviteCode)) return { error: "Invalid invite code format." };
 
-  const { data: team, error: teamError } = await supabase
-    .from("teams")
-    .select("id, count")
-    .eq("invite_code", inviteCode)
-    .single();
+  // Atomic capacity check + count increment + profile update in one DB call.
+  // The join_team function uses FOR UPDATE to serialize concurrent joins.
+  const { data, error } = await supabase.rpc("join_team", {
+    p_invite_code: inviteCode,
+    p_user_id: user.id,
+  });
 
-  if (teamError || !team) {
-    return { error: "Team not found. Check the code and try again." };
-  }
-
-  if ((team.count ?? 0) >= 4) {
-    return { error: "This team is full (max 3 students + 1 mentor)." };
-  }
-
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .update({ team_id: team.id })
-    .eq("id", user.id);
-
-  if (profileError) return { error: profileError.message };
-
-  await supabase
-    .from("teams")
-    .update({ count: (team.count ?? 0) + 1 })
-    .eq("id", team.id);
+  if (error) return { error: error.message };
+  if (data?.error) return { error: data.error as string };
 
   redirect("/dashboard");
 }
@@ -180,7 +164,9 @@ export async function upsertSubmission(
       help_received: str("help_received"),
       file_url: fileUrlRaw,
       status,
-      submitted_at: new Date().toISOString(),
+      // Only stamp submitted_at when actually submitting; drafts leave the
+      // existing value (or the DB default on first insert) unchanged.
+      ...(status === "submitted" && { submitted_at: new Date().toISOString() }),
     },
     { onConflict: "team_id,category" },
   );
@@ -235,11 +221,10 @@ export async function saveMentorRequest(
 
   const memo = (formData.get("memo") as string)?.trim().slice(0, 1000) || null;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase
+  const { error } = await supabase
     .from("profiles")
-    .update({ mentor_request_memo: memo } as any)
-    .eq("id", user.id) as any);
+    .update({ mentor_request_memo: memo })
+    .eq("id", user.id);
 
   if (error) return { error: error.message };
 
@@ -339,7 +324,8 @@ export async function submitHelpRequest(
       ? `${details.first_name} ${details.last_name ?? ""}`.trim()
       : user.email ?? "Unknown student";
 
-    const esc = (s: string) => s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     const attachmentLine = fileUrl && fileName
       ? `<p><strong>Attachment:</strong> <a href="${fileUrl}">${esc(fileName)}</a></p>`

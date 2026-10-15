@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { insertProfile } from "./actions";
 
 type View = "auth" | "forgot";
 
@@ -38,13 +37,19 @@ export default function LoginPage() {
       const supabase = createClient();
       const email = formData.get("email") as string;
       const password = formData.get("password") as string;
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
       if (error) {
         const msg = error.message.toLowerCase();
         if (msg.includes("already registered") || msg.includes("already been registered")) {
           setError("An account with this email already exists. Log in or reset your password.");
+        } else if (msg.includes("signups not allowed") || msg.includes("sign up is disabled")) {
+          setError("Sign-ups are currently disabled. Please contact the organizer.");
         } else {
-          setError(error.message);
+          setError(error.message || "Sign up failed. Please try again.");
         }
         return;
       }
@@ -53,22 +58,20 @@ export default function LoginPage() {
         setError("An account with this email already exists. Log in or reset your password.");
         return;
       }
-      // No session means email confirmation is required — don't redirect yet.
+      // No session means email confirmation is required — callback route handles profile creation.
       if (!data.session) {
-        if (data.user) {
-          // Profile insert will be retried via trigger or on first confirmed login.
-          // Best-effort attempt here; failure is non-fatal since session isn't active.
-          await insertProfile(data.user.id, email);
-        }
         setConfirmEmailSent(true);
         return;
       }
+      // Session exists: insert profile client-side (avoids server-action cookie timing issues).
+      // upsert + ignoreDuplicates so repeat signup attempts don't block.
       if (data.user) {
-        const { error: profileError } = await insertProfile(data.user.id, email);
-        if (profileError) {
-          setError("Account created but profile setup failed. Please contact support.");
-          return;
-        }
+        await supabase
+          .from("profiles")
+          .upsert(
+            { id: data.user.id, email, role: "student" },
+            { onConflict: "id", ignoreDuplicates: true },
+          );
       }
       window.location.href = "/dashboard";
     });
@@ -80,7 +83,7 @@ export default function LoginPage() {
       const supabase = createClient();
       const email = formData.get("email") as string;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/auth/update-password`,
       });
       if (error) {
         setError(error.message);
