@@ -377,30 +377,40 @@ export async function saveStudentInfo(
 
   const avatarUrl = str("existing_avatar_url");
 
-  const { error } = await supabase.from("student_details").upsert(
-    {
-      user_id: user.id,
-      school_name: str("school_name"),
-      student_id: str("student_id"),
-      first_name: str("first_name"),
-      last_name: str("last_name"),
-      phone: str("phone"),
-      gender,
-      race: str("race"),
-      parent_first_name: str("parent_first_name"),
-      parent_last_name: str("parent_last_name"),
-      parent_email: str("parent_email"),
-      parent_phone: str("parent_phone"),
-      address: str("address"),
-      city: str("city"),
-      state: str("state"),
-      zip_code: str("zip_code"),
-      avatar_url: avatarUrl,
-    },
-    { onConflict: "user_id" },
-  );
+  const firstName = str("first_name");
+  const lastName = str("last_name");
+
+  const [{ error }, { error: profileError }] = await Promise.all([
+    supabase.from("student_details").upsert(
+      {
+        user_id: user.id,
+        school_name: str("school_name"),
+        student_id: str("student_id"),
+        first_name: firstName,
+        last_name: lastName,
+        phone: str("phone"),
+        gender,
+        race: str("race"),
+        parent_first_name: str("parent_first_name"),
+        parent_last_name: str("parent_last_name"),
+        parent_email: str("parent_email"),
+        parent_phone: str("parent_phone"),
+        address: str("address"),
+        city: str("city"),
+        state: str("state"),
+        zip_code: str("zip_code"),
+        avatar_url: avatarUrl,
+      },
+      { onConflict: "user_id" },
+    ),
+    supabase
+      .from("profiles")
+      .update({ first_name: firstName, last_name: lastName })
+      .eq("id", user.id),
+  ]);
 
   if (error) return { error: error.message };
+  if (profileError) return { error: profileError.message };
 
   revalidatePath("/dashboard");
   return { success: true };
