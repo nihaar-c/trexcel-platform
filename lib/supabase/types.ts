@@ -379,6 +379,10 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      join_team: {
+        Args: { p_invite_code: string; p_user_id: string }
+        Returns: { error?: string; team_id?: string }
+      }
     }
     Enums: {
       user_role: "student" | "judge" | "mentor" | "admin"
