@@ -9,15 +9,58 @@ const ROLE_STYLES: Record<string, string> = {
   student: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
 };
 
+function Check({ done }: { done: boolean }) {
+  if (done) {
+    return (
+      <svg
+        className="h-4 w-4 text-green-500"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+      >
+        <path
+          fillRule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+          clipRule="evenodd"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      className="h-4 w-4 text-zinc-300 dark:text-zinc-600"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
 export default async function AdminUsersPage() {
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, email, first_name, last_name, role, team_id, teams(team_name)")
-    .order("email");
+  const [{ data }, { data: waivers }, { data: details }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, email, first_name, last_name, role, team_id, teams(team_name)")
+      .order("email"),
+    supabase
+      .from("waivers")
+      .select("user_id")
+      .not("completed_at", "is", null),
+    supabase
+      .from("student_details")
+      .select("user_id")
+      .not("first_name", "is", null),
+  ]);
 
-  // Group users by team, teams sorted alphabetically, unassigned last.
+  const waiverDone = new Set((waivers ?? []).map((w) => w.user_id));
+  const profileDone = new Set((details ?? []).map((d) => d.user_id));
+
   const profiles = data
     ?.slice()
     .sort((a, b) => {
@@ -56,6 +99,12 @@ export default async function AdminUsersPage() {
               <th className="px-4 py-3 text-left text-xs font-medium tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
                 Team
               </th>
+              <th className="px-4 py-3 text-center text-xs font-medium tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
+                Profile
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-medium tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
+                Waiver
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -81,6 +130,16 @@ export default async function AdminUsersPage() {
                   </td>
                   <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                     {team?.team_name ?? "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-center">
+                      <Check done={profileDone.has(p.id)} />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-center">
+                      <Check done={waiverDone.has(p.id)} />
+                    </div>
                   </td>
                 </tr>
               );
