@@ -1,7 +1,7 @@
 const CHECKPOINTS = [
   {
     label: "Checkpoint 1 – Project Proposal",
-    date: "October 15, 2026",
+    date: "October 30, 2026",
     description:
       "Submit project concepts and research plans. STEM teams provide background research and proof of concept. Receive feedback from reviewers.",
   },
