@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 const ROLE_STYLES: Record<string, string> = {
@@ -112,11 +113,16 @@ export default async function AdminUsersPage() {
               const role = p.role ?? "student";
               const team = p.teams as { team_name: string } | null;
               return (
-                <tr key={p.id}>
+                <tr
+                  key={p.id}
+                  className="relative cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                >
                   <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
-                    {p.first_name || p.last_name
-                      ? `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim()
-                      : "—"}
+                    <Link href={`/admin/users/${p.id}`} className="block after:absolute after:inset-0">
+                      {p.first_name || p.last_name
+                        ? `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim()
+                        : "—"}
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                     {p.email ?? "—"}
