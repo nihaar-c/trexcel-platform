@@ -40,8 +40,8 @@ function makeBuilder(result: { data: unknown; error: null }) {
 const BASE_PROFILE = {
   id: "user-1",
   email: "jane@example.com",
-  first_name: "Jane",
-  last_name: "Doe",
+  first_name: "Jane" as string | null,
+  last_name: "Doe" as string | null,
   role: "student",
   team_id: "team-1",
   teams: { team_name: "Team Alpha" },
