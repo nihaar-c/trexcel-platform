@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { PROFILE_SELECT, isProfileComplete } from "@/lib/profile";
+import { notifyOrganizers, esc as escHtml } from "@/lib/notifications";
 import { randomBytes } from "crypto";
 import { Resend } from "resend";
 
@@ -118,8 +120,8 @@ export async function upsertSubmission(
   const ALLOWED_CATEGORIES = ["STEM", "ART", "FITNESS"] as const;
   const ALLOWED_STATUSES = ["draft", "submitted"] as const;
 
-  // Waiver gate: a finalized submission requires this user to have a completed
-  // waiver. Drafts are still allowed so students can save progress beforehand.
+  // Waiver + profile gate: a finalized submission requires this user to have a
+  // completed waiver and a fully completed profile. Drafts are still allowed so students can save progress beforehand.
   const statusIsFinal = (formData.get("status") as string)?.trim() === "submitted";
   if (statusIsFinal) {
     const { data: waiver } = await supabase
@@ -129,6 +131,18 @@ export async function upsertSubmission(
       .single();
     if (!waiver?.completed_at) {
       return { error: "You must complete your waiver before submitting." };
+    }
+
+    const { data: details } = await supabase
+      .from("student_details")
+      .select(PROFILE_SELECT)
+      .eq("user_id", user.id)
+      .single();
+    if (!isProfileComplete(details)) {
+      return {
+        error:
+          "You must complete your profile, including your profile picture, before submitting.",
+      };
     }
   }
 
@@ -154,6 +168,19 @@ export async function upsertSubmission(
     }
   }
 
+  // Only the first final submission per team+category notifies organizers;
+  // edits and resubmissions before the deadline stay quiet.
+  let alreadySubmitted = false;
+  if (status === "submitted") {
+    const { data: prior } = await supabase
+      .from("submissions")
+      .select("status")
+      .eq("team_id", profile.team_id)
+      .eq("category", category)
+      .single();
+    alreadySubmitted = prior?.status === "submitted";
+  }
+
   const { error } = await supabase.from("submissions").upsert(
     {
       team_id: profile.team_id,
@@ -172,6 +199,25 @@ export async function upsertSubmission(
   );
 
   if (error) return { error: error.message };
+
+  if (status === "submitted" && !alreadySubmitted) {
+    const { data: team } = await supabase
+      .from("teams")
+      .select("team_name")
+      .eq("id", profile.team_id)
+      .single();
+    const teamName = team?.team_name ?? "Unknown team";
+    await notifyOrganizers(
+      `New submission from ${teamName} (${category})`,
+      `
+        <h2>New Submission</h2>
+        <p><strong>Team:</strong> ${escHtml(teamName)}</p>
+        <p><strong>Category:</strong> ${escHtml(category)}</p>
+        <p><strong>Title:</strong> ${escHtml(str("title"))}</p>
+        <p><strong>Submitted by:</strong> ${escHtml(user.email)}</p>
+      `,
+    );
+  }
 
   revalidatePath("/dashboard/submissions");
   return { success: true };
@@ -221,12 +267,40 @@ export async function saveMentorRequest(
 
   const memo = (formData.get("memo") as string)?.trim().slice(0, 1000) || null;
 
+  const { data: prior } = await supabase
+    .from("profiles")
+    .select("mentor_request_memo")
+    .eq("id", user.id)
+    .single();
+
   const { error } = await supabase
     .from("profiles")
     .update({ mentor_request_memo: memo })
     .eq("id", user.id);
 
   if (error) return { error: error.message };
+
+  if (memo && memo !== prior?.mentor_request_memo) {
+    const { data: details } = await supabase
+      .from("student_details")
+      .select("first_name, last_name")
+      .eq("user_id", user.id)
+      .single();
+    const name =
+      `${details?.first_name ?? ""} ${details?.last_name ?? ""}`.trim() ||
+      "Unknown student";
+    await notifyOrganizers(
+      `Mentorship request from ${name}`,
+      `
+        <h2>Mentorship Request</h2>
+        <p><strong>Student:</strong> ${escHtml(name)}</p>
+        <p><strong>Email:</strong> ${escHtml(user.email)}</p>
+        <hr />
+        <p><strong>Request:</strong></p>
+        <p style="white-space:pre-wrap">${escHtml(memo)}</p>
+      `,
+    );
+  }
 
   revalidatePath("/dashboard");
   return { success: true };
@@ -376,6 +450,7 @@ export async function saveStudentInfo(
     genderOption === "Other" ? genderOther || "Other" : genderOption;
 
   const avatarUrl = str("existing_avatar_url");
+  if (!avatarUrl) return { error: "A profile picture is required." };
 
   const firstName = str("first_name");
   const lastName = str("last_name");

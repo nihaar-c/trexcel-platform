@@ -26,6 +26,7 @@ type Props = {
   submissionsByCategory: Record<string, Submission>;
   readOnly?: boolean;
   waiverComplete?: boolean;
+  profileComplete?: boolean;
 };
 
 const CATEGORIES = ["STEM", "ART", "FITNESS"] as const;
@@ -54,12 +55,13 @@ export default function SubmissionsClient({
   submissionsByCategory,
   readOnly = false,
   waiverComplete = true,
+  profileComplete = true,
 }: Props) {
   const [activeCategory, setActiveCategory] = useState<Category>("STEM");
   const activeSub = submissionsByCategory[activeCategory] ?? null;
 
-  // Submissions require both a team and a completed waiver.
-  const effectiveReadOnly = readOnly || !waiverComplete;
+  // Submissions require a team, a completed waiver and a completed profile.
+  const effectiveReadOnly = readOnly || !waiverComplete || !profileComplete;
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,6 +79,15 @@ export default function SubmissionsClient({
           You must complete your participant waiver before you can submit.{" "}
           <a href="/dashboard" className="font-semibold underline underline-offset-2">
             Go to the Waivers tab →
+          </a>
+        </div>
+      )}
+
+      {!readOnly && !profileComplete && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+          You must complete your profile, including your profile picture, before you can submit.{" "}
+          <a href="/dashboard" className="font-semibold underline underline-offset-2">
+            Go to the Info tab →
           </a>
         </div>
       )}

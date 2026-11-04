@@ -14,12 +14,15 @@ type Member = {
 
 type Submission = {
   id: string;
+  title: string | null;
   description: string | null;
+  ai_description: string | null;
+  help_received: string | null;
   file_url: string | null;
   submitted_at: string;
-  category: string | null;
+  category: string;
   status: string | null;
-} | null;
+};
 
 type Score = {
   criterion_name: string;
@@ -31,7 +34,7 @@ type Score = {
 
 type Props = {
   members: Member[];
-  submission: Submission;
+  submissions: Submission[];
   scores: Score[];
 };
 
@@ -57,7 +60,7 @@ const STATUS_STYLES: Record<string, string> = {
   draft: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
 };
 
-export default function TeamDetailTabs({ members, submission, scores }: Props) {
+export default function TeamDetailTabs({ members, submissions, scores }: Props) {
   const [tab, setTab] = useState<Tab>("members");
 
   return (
@@ -128,16 +131,26 @@ export default function TeamDetailTabs({ members, submission, scores }: Props) {
         )}
 
         {tab === "submission" && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-            {submission ? (
-              <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            {submissions.length === 0 && (
+              <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  No submission yet.
+                </p>
+              </div>
+            )}
+            {submissions.map((submission) => (
+              <div
+                key={submission.id}
+                className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
                       Category
                     </p>
                     <p className="mt-0.5 font-semibold text-zinc-900 dark:text-zinc-50">
-                      {submission.category ?? "—"}
+                      {submission.category}
                     </p>
                   </div>
                   <span
@@ -146,14 +159,23 @@ export default function TeamDetailTabs({ members, submission, scores }: Props) {
                     {submission.status ?? "draft"}
                   </span>
                 </div>
-                <div>
-                  <p className="text-xs font-medium tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                    Description
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
-                    {submission.description ?? "—"}
-                  </p>
-                </div>
+                {(
+                  [
+                    ["Title", submission.title],
+                    ["Description", submission.description],
+                    ["AI use", submission.ai_description],
+                    ["Help received", submission.help_received],
+                  ] as const
+                ).map(([label, value]) => (
+                  <div key={label}>
+                    <p className="text-xs font-medium tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
+                      {label}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
+                      {value || "—"}
+                    </p>
+                  </div>
+                ))}
                 <div>
                   <p className="text-xs font-medium tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
                     Submitted
@@ -173,11 +195,7 @@ export default function TeamDetailTabs({ members, submission, scores }: Props) {
                   </a>
                 )}
               </div>
-            ) : (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No submission yet.
-              </p>
-            )}
+            ))}
           </div>
         )}
 

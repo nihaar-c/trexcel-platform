@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { PROFILE_SELECT, isProfileComplete } from "@/lib/profile";
 import SubmissionsClient from "./SubmissionsClient";
 
 export default async function SubmissionsPage() {
@@ -23,7 +24,7 @@ export default async function SubmissionsPage() {
 
   const hasTeam = !!profile?.team_id;
 
-  const [teamResult, submissionsResult, waiverResult] = await Promise.all([
+  const [teamResult, submissionsResult, waiverResult, detailsResult] = await Promise.all([
     hasTeam
       ? supabase
           .from("teams")
@@ -44,9 +45,15 @@ export default async function SubmissionsPage() {
       .select("completed_at")
       .eq("user_id", user.id)
       .single(),
+    supabase
+      .from("student_details")
+      .select(PROFILE_SELECT)
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
 
   const waiverComplete = !!waiverResult.data?.completed_at;
+  const profileComplete = isProfileComplete(detailsResult.data);
 
   const team = teamResult.data ?? { team_name: "Your Team", theme: null, memo: null };
 
@@ -82,6 +89,7 @@ export default async function SubmissionsPage() {
           submissionsByCategory={submissionsByCategory}
           readOnly={!hasTeam}
           waiverComplete={waiverComplete}
+          profileComplete={profileComplete}
         />
       </div>
     </div>

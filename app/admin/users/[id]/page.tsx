@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isProfileComplete } from "@/lib/profile";
 
 const ROLE_STYLES: Record<string, string> = {
   admin: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
@@ -11,11 +12,11 @@ const ROLE_STYLES: Record<string, string> = {
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
-    <div>
+    <div className="min-w-0">
       <dt className="text-xs font-medium tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-50">
+      <dd className="mt-1 text-sm break-words text-zinc-900 dark:text-zinc-50">
         {value || <span className="text-zinc-400 dark:text-zinc-600">—</span>}
       </dd>
     </div>
@@ -71,7 +72,7 @@ export default async function AdminUserDetailPage({
       : profile.email ?? id;
 
   const waiverComplete = !!waiver?.completed_at;
-  const profileComplete = !!details?.first_name;
+  const profileComplete = isProfileComplete(details);
 
   return (
     <div className="max-w-3xl">

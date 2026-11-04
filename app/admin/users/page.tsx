@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { isProfileComplete } from "@/lib/profile";
 
 const ROLE_STYLES: Record<string, string> = {
   admin:
@@ -55,12 +56,15 @@ export default async function AdminUsersPage() {
       .not("completed_at", "is", null),
     supabase
       .from("student_details")
-      .select("user_id")
-      .not("first_name", "is", null),
+      .select(
+        "user_id, first_name, last_name, phone, gender, race, school_name, student_id, parent_first_name, parent_last_name, parent_email, parent_phone, address, city, state, zip_code, avatar_url",
+      ),
   ]);
 
   const waiverDone = new Set((waivers ?? []).map((w) => w.user_id));
-  const profileDone = new Set((details ?? []).map((d) => d.user_id));
+  const profileDone = new Set(
+    (details ?? []).filter(isProfileComplete).map((d) => d.user_id),
+  );
 
   const profiles = data
     ?.slice()

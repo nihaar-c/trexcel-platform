@@ -1,18 +1,23 @@
 const CHECKPOINTS = [
   {
     label: "Checkpoint 1 – Project Proposal",
-    date: "October 30, 2026",
+    date: "November 30, 2026",
     description:
       "Submit project concepts and research plans. STEM teams provide background research and proof of concept. Receive feedback from reviewers.",
   },
   {
     label: "Checkpoint 2 – Progress Update",
-    date: "November 15, 2026",
+    date: "December 15, 2026",
     description:
       "Submit photos or videos showing project progress. Share accomplishments, challenges, and lessons learned.",
   },
   {
-    label: "Checkpoint 3 – Final Submission",
+    label: "Checkpoint 3",
+    date: "December 31, 2026",
+    description: "",
+  },
+  {
+    label: "Checkpoint 4 – Final Submission",
     date: "February 8, 2027",
     description:
       "Submit final project videos and supporting materials. Materials are reviewed by judges prior to the in-person finals.",

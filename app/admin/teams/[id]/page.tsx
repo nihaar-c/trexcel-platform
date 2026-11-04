@@ -24,9 +24,11 @@ export default async function AdminTeamDetailPage({
         .eq("team_id", id),
       supabase
         .from("submissions")
-        .select("id, description, file_url, submitted_at, category, status")
+        .select(
+          "id, title, description, ai_description, help_received, file_url, submitted_at, category, status",
+        )
         .eq("team_id", id)
-        .maybeSingle(),
+        .order("category"),
       supabase
         .from("judging_scores")
         .select(
@@ -88,7 +90,7 @@ export default async function AdminTeamDetailPage({
 
       <TeamDetailTabs
         members={memberDetails}
-        submission={submissionResult.data}
+        submissions={submissionResult.data ?? []}
         scores={scores}
       />
     </div>

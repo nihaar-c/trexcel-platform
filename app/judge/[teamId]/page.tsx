@@ -36,7 +36,7 @@ export default async function JudgeScoringPage({
       .from("submissions")
       .select("description, file_url, submitted_at, category, status")
       .eq("team_id", teamId)
-      .maybeSingle(),
+      .order("category"),
     supabase
       .from("judging_scores")
       .select("criterion_id, score, locked")
@@ -47,8 +47,10 @@ export default async function JudgeScoringPage({
   if (teamResult.error || !teamResult.data) notFound();
 
   const team = teamResult.data;
-  const sub = submissionResult.data;
-  const category = sub?.category?.toUpperCase() ?? null;
+  const submissions = submissionResult.data ?? [];
+  const categories = [
+    ...new Set(submissions.map((s) => s.category.toUpperCase())),
+  ];
 
   let criteria: {
     id: string;
@@ -60,14 +62,15 @@ export default async function JudgeScoringPage({
     initial_score: number | null;
   }[] = [];
 
-  if (category) {
+  if (categories.length > 0) {
     const { data: rubricCats } = await supabase
       .from("rubric_categories")
       .select(
-        `id, name, display_order,
+        `id, name, rubric_type, display_order,
          criteria:rubric_criteria(id, name, min_score, max_score, score_weight, display_order)`,
       )
-      .eq("rubric_type", category)
+      .in("rubric_type", categories)
+      .order("rubric_type")
       .order("display_order");
 
     const scoreMap = new Map(
@@ -85,7 +88,10 @@ export default async function JudgeScoringPage({
           min_score: cr.min_score,
           max_score: cr.max_score,
           score_weight: cr.score_weight,
-          category_name: cat.name,
+          category_name:
+            categories.length > 1
+              ? `${cat.rubric_type} — ${cat.name}`
+              : cat.name,
           initial_score: scoreMap.get(cr.id) ?? null,
         });
       }
@@ -121,44 +127,47 @@ export default async function JudgeScoringPage({
             Submission
           </h2>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold text-zinc-900 dark:text-zinc-50">
-                  {team.team_name}
-                </p>
-                <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-                  {category ?? "No category"} ·{" "}
-                  {sub?.submitted_at
-                    ? new Date(sub.submitted_at).toLocaleDateString()
-                    : "Not submitted"}
-                </p>
-              </div>
-            </div>
-
-            {sub?.description && (
-              <p className="mt-4 text-sm text-zinc-700 dark:text-zinc-300">
-                {sub.description}
+          {submissions.length === 0 && (
+            <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+                {team.team_name}
               </p>
-            )}
-
-            {sub?.file_url && (
-              <a
-                href={sub.file_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-              >
-                Download submission →
-              </a>
-            )}
-
-            {!sub && (
               <p className="mt-4 text-sm text-zinc-400 dark:text-zinc-500">
                 No submission uploaded yet.
               </p>
-            )}
-          </div>
+            </div>
+          )}
+          {submissions.map((sub) => (
+            <div
+              key={sub.category}
+              className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+                {team.team_name}
+              </p>
+              <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+                {sub.category.toUpperCase()} ·{" "}
+                {new Date(sub.submitted_at).toLocaleDateString()}
+              </p>
+
+              {sub.description && (
+                <p className="mt-4 text-sm text-zinc-700 dark:text-zinc-300">
+                  {sub.description}
+                </p>
+              )}
+
+              {sub.file_url && (
+                <a
+                  href={sub.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                >
+                  Download submission →
+                </a>
+              )}
+            </div>
+          ))}
 
           <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
             <p className="mb-3 text-xs font-semibold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
@@ -186,7 +195,7 @@ export default async function JudgeScoringPage({
         {/* Right — rubric scoring */}
         <div className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            Rubric — {category ?? "—"}
+            Rubric{categories.length > 0 ? ` — ${categories.join(", ")}` : ""}
           </h2>
           {criteria.length > 0 ? (
             <ScoringView
@@ -196,7 +205,7 @@ export default async function JudgeScoringPage({
             />
           ) : (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              No rubric available — team has not selected a category.
+              No rubric available — team has no submissions yet.
             </p>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { REQUIRED_PROFILE_FIELDS } from "@/lib/profile";
 
 // ---------------------------------------------------------------------------
 // Hoisted mock primitives
@@ -416,7 +417,7 @@ const BASE_STUDENT_FORM: Record<string, string> = {
   city: "Springfield",
   state: "IL",
   zip_code: "62701",
-  existing_avatar_url: "",
+  existing_avatar_url: "https://example.com/avatar.png",
 };
 
 describe("saveStudentInfo", () => {
@@ -431,6 +432,16 @@ describe("saveStudentInfo", () => {
     expect(await saveStudentInfo(null, fd(BASE_STUDENT_FORM))).toEqual({
       error: "Not authenticated.",
     });
+  });
+
+  it("returns an error and saves nothing when no profile picture is provided", async () => {
+    authed();
+    mockFrom.mockImplementation(() => makeBuilder({ data: null, error: null }));
+    expect(
+      await saveStudentInfo(null, fd({ ...BASE_STUDENT_FORM, existing_avatar_url: "" })),
+    ).toEqual({ error: "A profile picture is required." });
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
   it("returns success and revalidates /dashboard on valid data", async () => {
@@ -555,6 +566,10 @@ describe("saveWaiver", () => {
 // upsertSubmission — waiver gate
 // ---------------------------------------------------------------------------
 
+const COMPLETE_DETAILS = Object.fromEntries(
+  REQUIRED_PROFILE_FIELDS.map((f) => [f, "x"]),
+);
+
 const SUBMITTED: Record<string, string> = {
   title: "Solar Tracker",
   description: "We built it.",
@@ -598,10 +613,38 @@ describe("upsertSubmission — waiver gate", () => {
         return makeBuilder({ data: { team_id: "t-1", role: "student" }, error: null });
       if (table === "waivers")
         return makeBuilder({ data: { completed_at: "2026-10-01T00:00:00Z" }, error: null });
+      if (table === "student_details")
+        return makeBuilder({ data: COMPLETE_DETAILS, error: null });
       return makeBuilder({ data: null, error: null });
     });
     const result = await upsertSubmission(null, fd(SUBMITTED));
     expect(result).toEqual({ success: true });
+  });
+
+  it("blocks a final submission when the profile is incomplete (no avatar)", async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "profiles")
+        return makeBuilder({ data: { team_id: "t-1", role: "student" }, error: null });
+      if (table === "waivers")
+        return makeBuilder({ data: { completed_at: "2026-10-01T00:00:00Z" }, error: null });
+      if (table === "student_details")
+        return makeBuilder({ data: { ...COMPLETE_DETAILS, avatar_url: null }, error: null });
+      return makeBuilder({ data: null, error: null });
+    });
+    const result = await upsertSubmission(null, fd(SUBMITTED));
+    expect(result?.error).toMatch(/profile/i);
+  });
+
+  it("blocks a final submission when there is no student_details row", async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "profiles")
+        return makeBuilder({ data: { team_id: "t-1", role: "student" }, error: null });
+      if (table === "waivers")
+        return makeBuilder({ data: { completed_at: "2026-10-01T00:00:00Z" }, error: null });
+      return makeBuilder({ data: null, error: null });
+    });
+    const result = await upsertSubmission(null, fd(SUBMITTED));
+    expect(result?.error).toMatch(/profile/i);
   });
 
   it("blocks a mentor from submitting", async () => {
@@ -628,6 +671,8 @@ describe("upsertSubmission — waiver gate", () => {
         return makeBuilder({ data: { team_id: "t-1", role: "student" }, error: null });
       if (table === "waivers")
         return makeBuilder({ data: { completed_at: "2026-10-01T00:00:00Z" }, error: null });
+      if (table === "student_details")
+        return makeBuilder({ data: COMPLETE_DETAILS, error: null });
       return makeBuilder({ data: null, error: null });
     });
     const result = await upsertSubmission(null, fd({ ...SUBMITTED, category: "INVALID" }));
@@ -655,6 +700,8 @@ describe("upsertSubmission — submitted_at", () => {
         return makeBuilder({ data: { team_id: "t-1", role: "student" }, error: null });
       if (table === "waivers")
         return makeBuilder({ data: { completed_at: "2026-10-01T00:00:00Z" }, error: null });
+      if (table === "student_details")
+        return makeBuilder({ data: COMPLETE_DETAILS, error: null });
       return submissionsBuilder;
     });
 
@@ -692,6 +739,8 @@ describe("upsertSubmission — file URL validation", () => {
         return makeBuilder({ data: { team_id: "t-1", role: "student" }, error: null });
       if (table === "waivers")
         return makeBuilder({ data: { completed_at: "2026-10-01T00:00:00Z" }, error: null });
+      if (table === "student_details")
+        return makeBuilder({ data: COMPLETE_DETAILS, error: null });
       return makeBuilder({ data: null, error: null });
     });
   });

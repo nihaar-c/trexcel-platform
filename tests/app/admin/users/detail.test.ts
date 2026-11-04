@@ -64,7 +64,7 @@ const BASE_DETAILS = {
   city: "San Jose",
   state: "CA",
   zip_code: "95101",
-  avatar_url: null,
+  avatar_url: "https://example.com/avatar.png" as string | null,
 };
 
 const BASE_WAIVER = {
@@ -152,14 +152,44 @@ describe("AdminUserDetailPage — name display", () => {
 // ---------------------------------------------------------------------------
 
 describe("AdminUserDetailPage — profile completion badge", () => {
-  it("shows 'Profile complete' when student_details has a first_name", async () => {
+  it("shows 'Profile complete' when every student_details field and the avatar are set", async () => {
     setup({ details: BASE_DETAILS });
     expect(await render()).toContain("Profile complete");
+  });
+
+  it("shows 'Profile incomplete' when the profile picture is missing", async () => {
+    setup({ details: { ...BASE_DETAILS, avatar_url: null } });
+    expect(await render()).toContain("Profile incomplete");
+  });
+
+  it("shows 'Profile incomplete' when any other field is blank", async () => {
+    setup({ details: { ...BASE_DETAILS, parent_email: "" } });
+    expect(await render()).toContain("Profile incomplete");
   });
 
   it("shows 'Profile incomplete' when student_details is absent", async () => {
     setup({ details: null });
     expect(await render()).toContain("Profile incomplete");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// long values
+// ---------------------------------------------------------------------------
+
+describe("AdminUserDetailPage — long values", () => {
+  const LONG = "a-very-long-email-address-with-no-break-points@some-extremely-long-subdomain.example.com";
+
+  it("renders the full long email", async () => {
+    setup({ profile: { ...BASE_PROFILE, email: LONG }, details: BASE_DETAILS });
+    expect(await render()).toContain(LONG);
+  });
+
+  it("lets field values wrap and shrink so they cannot overflow into the next cell", async () => {
+    setup({ profile: { ...BASE_PROFILE, email: LONG }, details: BASE_DETAILS });
+    const html = await render();
+    expect(html).toMatch(/<div class="min-w-0"><dt/);
+    expect(html).toMatch(/<dd class="[^"]*break-words/);
   });
 });
 

@@ -196,6 +196,7 @@ export type Database = {
           address: string | null
           avatar_url: string | null
           city: string | null
+          created_at: string | null
           first_name: string | null
           gender: string | null
           last_name: string | null
@@ -215,6 +216,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           city?: string | null
+          created_at?: string | null
           first_name?: string | null
           gender?: string | null
           last_name?: string | null
@@ -234,6 +236,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           city?: string | null
+          created_at?: string | null
           first_name?: string | null
           gender?: string | null
           last_name?: string | null
@@ -379,6 +382,16 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      weekly_profile_digest: {
+        Args: { p_secret: string; p_since: string }
+        Returns: {
+          first_name: string | null
+          last_name: string | null
+          email: string | null
+          school_name: string | null
+          created_at: string
+        }[]
+      }
       join_team: {
         Args: { p_invite_code: string; p_user_id: string }
         Returns: { error?: string; team_id?: string }

@@ -85,6 +85,11 @@ export default function ProfileForm({ details, userId }: Props) {
     let avatarUrl = details?.avatar_url ?? null;
 
     const file = fileInputRef.current?.files?.[0];
+    if (!file && !avatarUrl) {
+      setState({ error: "A profile picture is required." });
+      setPending(false);
+      return;
+    }
     if (file) {
       if (!ALLOWED_TYPES.includes(file.type)) {
         setState({ error: "Avatar must be a JPEG, PNG, or WebP image." });
@@ -174,7 +179,7 @@ export default function ProfileForm({ details, userId }: Props) {
           </div>
         </button>
         <p className="text-xs text-zinc-400 dark:text-zinc-500">
-          JPEG, PNG, or WebP · max 5 MB
+          Required · JPEG, PNG, or WebP · max 5 MB
         </p>
       </div>
 
