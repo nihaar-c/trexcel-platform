@@ -1,7 +1,7 @@
 const CHECKPOINTS = [
   { label: "Checkpoint 1", date: "November 30, 2026" },
   { label: "Checkpoint 2", date: "December 15, 2026" },
-  { label: "Checkpoint 3", date: "December 31, 2026" },
+  { label: "Checkpoint 3", date: "December 30, 2026" },
   { label: "Checkpoint 4", date: "February 8, 2027" },
 ];
 

@@ -23,7 +23,7 @@ const TIMELINE = [
   { date: "November 30, 2026", event: "Checkpoint 1 — Project Proposal" },
   { date: "October 31, 2026", event: "Registration Deadline" },
   { date: "December 15, 2026", event: "Checkpoint 2 — Progress Update" },
-  { date: "December 31, 2026", event: "Checkpoint 3" },
+  { date: "December 30, 2026", event: "Checkpoint 3" },
   { date: "February 8, 2027", event: "Checkpoint 4 — Final Submission" },
   {
     date: "Sat, Feb 20, 2027",
