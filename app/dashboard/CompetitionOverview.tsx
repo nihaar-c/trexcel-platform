@@ -1,27 +1,8 @@
 const CHECKPOINTS = [
-  {
-    label: "Checkpoint 1 – Project Proposal",
-    date: "November 30, 2026",
-    description:
-      "Submit project concepts and research plans. STEM teams provide background research and proof of concept. Receive feedback from reviewers.",
-  },
-  {
-    label: "Checkpoint 2 – Progress Update",
-    date: "December 15, 2026",
-    description:
-      "Submit photos or videos showing project progress. Share accomplishments, challenges, and lessons learned.",
-  },
-  {
-    label: "Checkpoint 3",
-    date: "December 31, 2026",
-    description: "",
-  },
-  {
-    label: "Checkpoint 4 – Final Submission",
-    date: "February 8, 2027",
-    description:
-      "Submit final project videos and supporting materials. Materials are reviewed by judges prior to the in-person finals.",
-  },
+  { label: "Checkpoint 1", date: "November 30, 2026" },
+  { label: "Checkpoint 2", date: "December 15, 2026" },
+  { label: "Checkpoint 3", date: "December 31, 2026" },
+  { label: "Checkpoint 4", date: "February 8, 2027" },
 ];
 
 const AWARDS = [
@@ -69,7 +50,7 @@ export default function CompetitionOverview() {
       <div className={sectionCls}>
         <p className={headingCls}>Project Checkpoints</p>
         <div className="flex flex-col gap-4">
-          {CHECKPOINTS.map(({ label, date, description }) => (
+          {CHECKPOINTS.map(({ label, date }) => (
             <div key={label}>
               <div className="flex items-start justify-between gap-2">
                 <p className="font-medium text-zinc-900 dark:text-zinc-50">{label}</p>
@@ -77,7 +58,6 @@ export default function CompetitionOverview() {
                   {date}
                 </span>
               </div>
-              <p className="mt-1 text-zinc-500 dark:text-zinc-400">{description}</p>
             </div>
           ))}
         </div>

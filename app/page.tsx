@@ -20,10 +20,11 @@ const CATEGORIES = [
 
 const TIMELINE = [
   { date: "Mid-August 2026", event: "Registration Opens" },
-  { date: "October 30, 2026", event: "Checkpoint 1 — Project Proposal" },
+  { date: "November 30, 2026", event: "Checkpoint 1 — Project Proposal" },
   { date: "October 31, 2026", event: "Registration Deadline" },
-  { date: "November 15, 2026", event: "Checkpoint 2 — Progress Update" },
-  { date: "February 8, 2027", event: "Checkpoint 3 — Final Submission" },
+  { date: "December 15, 2026", event: "Checkpoint 2 — Progress Update" },
+  { date: "December 31, 2026", event: "Checkpoint 3" },
+  { date: "February 8, 2027", event: "Checkpoint 4 — Final Submission" },
   {
     date: "Sat, Feb 20, 2027",
     event: "In-Person Finals & Awards",
