@@ -10,6 +10,7 @@ const mockRpc = vi.hoisted(() => vi.fn());
 const mockRedirect = vi.hoisted(() => vi.fn());
 const mockRevalidatePath = vi.hoisted(() => vi.fn());
 
+vi.mock("@/lib/features", () => ({ SUBMISSIONS_ENABLED: true }));
 vi.mock("next/navigation", () => ({ redirect: mockRedirect }));
 vi.mock("next/cache", () => ({ revalidatePath: mockRevalidatePath }));
 

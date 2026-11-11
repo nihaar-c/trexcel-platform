@@ -21,6 +21,8 @@ const securityHeaders = [
       // Avatar images served from Supabase Storage
       `img-src 'self' data: ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://*.supabase.co"}`,
       "font-src 'self'",
+      // Checkpoint Google Forms are embedded in the student dashboard
+      "frame-src https://docs.google.com",
       // Submission links open in a new tab — allow them to navigate out but not embed us
       "frame-ancestors 'none'",
     ].join("; "),

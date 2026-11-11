@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { SUBMISSIONS_ENABLED } from "@/lib/features";
+import { CHECKPOINT_FORMS } from "@/lib/checkpoints";
 import { PROFILE_SELECT, isProfileComplete } from "@/lib/profile";
 import { notifyOrganizers, esc as escHtml } from "@/lib/notifications";
 import { randomBytes } from "crypto";
@@ -102,6 +104,7 @@ export async function upsertSubmission(
   _prev: SubmissionState,
   formData: FormData,
 ): Promise<SubmissionState> {
+  if (!SUBMISSIONS_ENABLED) return { error: "Submissions are currently disabled." };
   const supabase = await createClient();
   const {
     data: { user },
@@ -227,6 +230,7 @@ export async function saveTeamOverview(
   _prev: SubmissionState,
   formData: FormData,
 ): Promise<SubmissionState> {
+  if (!SUBMISSIONS_ENABLED) return { error: "Submissions are currently disabled." };
   const supabase = await createClient();
   const {
     data: { user },
@@ -486,6 +490,61 @@ export async function saveStudentInfo(
 
   if (error) return { error: error.message };
   if (profileError) return { error: profileError.message };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function confirmCheckpoint(
+  checkpoint: number,
+): Promise<{ error?: string; success?: boolean }> {
+  if (!(checkpoint in CHECKPOINT_FORMS)) return { error: "Invalid checkpoint." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("team_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.team_id) return { error: "You must be on a team first." };
+  if (profile.role === "mentor") return { error: "Mentors cannot submit." };
+
+  // Gate: a completed waiver AND a fully completed profile (incl. profile picture).
+  const { data: waiver } = await supabase
+    .from("waivers")
+    .select("completed_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!waiver?.completed_at) {
+    return { error: "You must complete your waiver before submitting." };
+  }
+
+  const { data: details } = await supabase
+    .from("student_details")
+    .select(PROFILE_SELECT)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!isProfileComplete(details)) {
+    return {
+      error:
+        "You must complete your profile, including your profile picture, before submitting.",
+    };
+  }
+
+  const { error } = await supabase.from("checkpoint_submissions").insert({
+    team_id: profile.team_id,
+    checkpoint,
+    submitted_by: user.id,
+  });
+
+  // 23505 = already confirmed by a teammate; treat as success.
+  if (error && error.code !== "23505") return { error: error.message };
 
   revalidatePath("/dashboard");
   return { success: true };

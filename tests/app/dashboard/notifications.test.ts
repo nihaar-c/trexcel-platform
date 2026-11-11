@@ -5,6 +5,7 @@ const mockGetUser = vi.hoisted(() => vi.fn());
 const mockFrom = vi.hoisted(() => vi.fn());
 const mockNotify = vi.hoisted(() => vi.fn());
 
+vi.mock("@/lib/features", () => ({ SUBMISSIONS_ENABLED: true }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/notifications", async (orig) => ({

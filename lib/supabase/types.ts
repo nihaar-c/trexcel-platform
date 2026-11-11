@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      checkpoint_submissions: {
+        Row: {
+          checkpoint: number
+          id: string
+          submitted_at: string
+          submitted_by: string | null
+          team_id: string
+        }
+        Insert: {
+          checkpoint: number
+          id?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          team_id: string
+        }
+        Update: {
+          checkpoint?: number
+          id?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkpoint_submissions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       judging_assignments: {
         Row: {
           id: string

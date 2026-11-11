@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { isProfileComplete } from "@/lib/profile";
 import DashboardTabs from "./DashboardTabs";
 
 export default async function DashboardPage() {
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
   const isStudent = role === "student" || !role;
   const isMentor = role === "mentor";
 
-  const [teamResult, studentDetailsResult, waiverResult] = await Promise.all([
+  const [teamResult, studentDetailsResult, waiverResult, checkpointResult] = await Promise.all([
     (isStudent || isMentor) && profile?.team_id
       ? supabase
           .from("teams")
@@ -51,6 +52,12 @@ export default async function DashboardPage() {
           .eq("user_id", user.id)
           .single()
       : Promise.resolve({ data: null }),
+    isStudent && profile?.team_id
+      ? supabase
+          .from("checkpoint_submissions")
+          .select("checkpoint")
+          .eq("team_id", profile.team_id)
+      : Promise.resolve({ data: [] as { checkpoint: number }[] }),
   ]);
 
   return (
@@ -62,6 +69,9 @@ export default async function DashboardPage() {
         team={teamResult.data}
         studentDetails={studentDetailsResult.data}
         waiver={waiverResult.data}
+        profileComplete={isProfileComplete(studentDetailsResult.data)}
+        waiverComplete={!!waiverResult.data?.completed_at}
+        checkpointsDone={(checkpointResult.data ?? []).map((c) => c.checkpoint)}
       />
     </div>
   );

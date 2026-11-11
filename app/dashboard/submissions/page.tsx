@@ -2,9 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PROFILE_SELECT, isProfileComplete } from "@/lib/profile";
+import { SUBMISSIONS_ENABLED } from "@/lib/features";
 import SubmissionsClient from "./SubmissionsClient";
 
 export default async function SubmissionsPage() {
+  if (!SUBMISSIONS_ENABLED) redirect("/dashboard");
+
   const supabase = await createClient();
 
   const {

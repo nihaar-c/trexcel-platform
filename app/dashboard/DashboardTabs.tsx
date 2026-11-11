@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useActionState } from "react";
-import Link from "next/link";
 import TeamSetup from "./TeamSetup";
 import ProfileForm from "./ProfileForm";
 import CompetitionOverview from "./CompetitionOverview";
 import WaiverTab from "./WaiverTab";
 import HelpTab from "./HelpTab";
+import CheckpointTab from "./CheckpointTab";
 import { saveMentorRequest } from "./actions";
 
 type Profile = { role: string | null; team_id: string | null } | null;
@@ -57,9 +57,12 @@ type Props = {
   team: Team;
   studentDetails: StudentDetails;
   waiver: Waiver;
+  checkpointsDone: number[];
+  profileComplete: boolean;
+  waiverComplete: boolean;
 };
 
-type StudentTab = "overview" | "team" | "profile" | "waiver" | "mentor_request" | "help";
+type StudentTab = "overview" | "team" | "profile" | "waiver" | "mentor_request" | "help" | "checkpoint_1" | "checkpoint_2";
 type MentorTab = "overview" | "team";
 
 const STUDENT_TABS: { id: StudentTab; label: string }[] = [
@@ -67,6 +70,8 @@ const STUDENT_TABS: { id: StudentTab; label: string }[] = [
   { id: "team", label: "Team" },
   { id: "profile", label: "Info" },
   { id: "waiver", label: "Waivers" },
+  { id: "checkpoint_1", label: "Checkpoint 1" },
+  { id: "checkpoint_2", label: "Checkpoint 2" },
   { id: "mentor_request", label: "Request Mentor" },
   { id: "help", label: "Help" },
 ];
@@ -176,6 +181,9 @@ export default function DashboardTabs({
   team,
   studentDetails,
   waiver,
+  checkpointsDone,
+  profileComplete,
+  waiverComplete,
 }: Props) {
   const role = profile?.role ?? "student";
   const isStudent = role === "student" || !profile?.role;
@@ -223,9 +231,6 @@ export default function DashboardTabs({
                 {label}
               </button>
             ))}
-            <Link href="/dashboard/submissions" className={tabClass(false)}>
-              Submissions
-            </Link>
           </div>
 
           <div className="mt-6">
@@ -236,6 +241,26 @@ export default function DashboardTabs({
             )}
             {studentTab === "waiver" && (
               <WaiverTab waiver={waiver} userId={userId} />
+            )}
+            {studentTab === "checkpoint_1" && (
+              <CheckpointTab
+                checkpoint={1}
+                hasTeam={!!profile?.team_id}
+                confirmed={checkpointsDone.includes(1)}
+                profileComplete={profileComplete}
+                waiverComplete={waiverComplete}
+                onNavigate={setStudentTab}
+              />
+            )}
+            {studentTab === "checkpoint_2" && (
+              <CheckpointTab
+                checkpoint={2}
+                hasTeam={!!profile?.team_id}
+                confirmed={checkpointsDone.includes(2)}
+                profileComplete={profileComplete}
+                waiverComplete={waiverComplete}
+                onNavigate={setStudentTab}
+              />
             )}
             {studentTab === "mentor_request" && <MentorRequestTab />}
             {studentTab === "help" && <HelpTab />}

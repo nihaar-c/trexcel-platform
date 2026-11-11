@@ -10,6 +10,7 @@ const mockGetUser = vi.hoisted(() => vi.fn());
 const mockFrom = vi.hoisted(() => vi.fn());
 const client = vi.hoisted(() => ({ props: null as any }));
 
+vi.mock("@/lib/features", () => ({ SUBMISSIONS_ENABLED: true }));
 vi.mock("next/navigation", () => ({ redirect: mockRedirect }));
 vi.mock("next/link", () => ({ default: ({ children }: any) => children }));
 vi.mock("@/lib/supabase/server", () => ({
