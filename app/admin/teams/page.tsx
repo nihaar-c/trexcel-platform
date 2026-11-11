@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { ADMIN_CHECKPOINTS } from "@/lib/checkpoints";
+import CheckpointToggles from "./CheckpointToggles";
 
 const STATUS_STYLES: Record<string, string> = {
   submitted:
@@ -17,7 +19,8 @@ export default async function AdminTeamsPage() {
     .select(
       `id, team_name, count,
        members:profiles(id, role),
-       submission:submissions(category, status, submitted_at)`,
+       submission:submissions(category, status, submitted_at),
+       checkpoints:checkpoint_submissions(checkpoint)`,
     )
     .order("team_name");
 
@@ -42,12 +45,16 @@ export default async function AdminTeamsPage() {
             : team.submission;
           const status: string = sub?.status ?? "draft";
 
+          const doneCheckpoints = (
+            (team.checkpoints ?? []) as { checkpoint: number }[]
+          ).map((c) => c.checkpoint);
+
           return (
-            <Link
+            <div
               key={team.id}
-              href={`/admin/teams/${team.id}`}
               className="flex flex-col rounded-xl border border-zinc-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
             >
+              <Link href={`/admin/teams/${team.id}`} className="flex flex-col">
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-semibold text-zinc-900 dark:text-zinc-50">
                   {team.team_name}
@@ -71,7 +78,13 @@ export default async function AdminTeamsPage() {
                   </span>
                 )}
               </div>
-            </Link>
+              </Link>
+              <CheckpointToggles
+                teamId={team.id}
+                checkpoints={ADMIN_CHECKPOINTS}
+                initial={doneCheckpoints}
+              />
+            </div>
           );
         })}
       </div>

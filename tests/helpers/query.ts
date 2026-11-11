@@ -10,7 +10,7 @@ export function makeQuery(result: { data: unknown; error?: unknown }) {
   const res = { error: null, ...result };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const b: Record<string, any> = {};
-  for (const m of ["select", "eq", "neq", "in", "not", "order", "insert", "update", "upsert"]) {
+  for (const m of ["select", "eq", "neq", "in", "not", "order", "insert", "update", "upsert", "delete"]) {
     b[m] = vi.fn(() => b);
   }
   b.single = vi.fn().mockResolvedValue(res);

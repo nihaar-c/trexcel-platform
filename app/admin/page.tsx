@@ -6,15 +6,10 @@ export default async function AdminOverviewPage() {
   const [
     { count: userCount },
     { count: teamCount },
-    { count: submissionCount },
     { count: judgeCount },
   ] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase.from("teams").select("*", { count: "exact", head: true }),
-    supabase
-      .from("submissions")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "submitted"),
     supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })
@@ -24,7 +19,6 @@ export default async function AdminOverviewPage() {
   const stats = [
     { label: "Total accounts", value: userCount ?? 0 },
     { label: "Teams", value: teamCount ?? 0 },
-    { label: "Submissions", value: submissionCount ?? 0 },
     { label: "Judges", value: judgeCount ?? 0 },
   ];
 
@@ -34,7 +28,7 @@ export default async function AdminOverviewPage() {
         Overview
       </h1>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         {stats.map(({ label, value }) => (
           <div
             key={label}
