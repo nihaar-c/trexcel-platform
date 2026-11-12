@@ -116,40 +116,52 @@ export default async function AdminUsersPage() {
             {profiles?.map((p) => {
               const role = p.role ?? "student";
               const team = p.teams as { team_name: string } | null;
+              // Each cell holds its own full-size link. Don't use a stretched
+              // `::after` link on a `position: relative` <tr>: browsers (notably
+              // Safari) don't reliably treat table rows as containing blocks, so
+              // the overlays escape the row and swallow clicks on other rows.
+              const href = `/admin/users/${p.id}`;
+              const cell = "block px-4 py-3";
               return (
                 <tr
                   key={p.id}
-                  className="relative cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                  className="cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                 >
-                  <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">
-                    <Link href={`/admin/users/${p.id}`} className="block after:absolute after:inset-0">
+                  <td className="font-medium text-zinc-900 dark:text-zinc-50">
+                    <Link href={href} className={cell}>
                       {p.first_name || p.last_name
                         ? `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim()
                         : "—"}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                    {p.email ?? "—"}
+                  <td className="text-zinc-600 dark:text-zinc-400">
+                    <Link href={href} className={cell}>
+                      {p.email ?? "—"}
+                    </Link>
                   </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${ROLE_STYLES[role] ?? ROLE_STYLES.student}`}
-                    >
-                      {role}
-                    </span>
+                  <td>
+                    <Link href={href} className={cell}>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${ROLE_STYLES[role] ?? ROLE_STYLES.student}`}
+                      >
+                        {role}
+                      </span>
+                    </Link>
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                    {team?.team_name ?? "—"}
+                  <td className="text-zinc-600 dark:text-zinc-400">
+                    <Link href={href} className={cell}>
+                      {team?.team_name ?? "—"}
+                    </Link>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center">
+                  <td>
+                    <Link href={href} className={`${cell} flex justify-center`}>
                       <Check done={profileDone.has(p.id)} />
-                    </div>
+                    </Link>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center">
+                  <td>
+                    <Link href={href} className={`${cell} flex justify-center`}>
                       <Check done={waiverDone.has(p.id)} />
-                    </div>
+                    </Link>
                   </td>
                 </tr>
               );
